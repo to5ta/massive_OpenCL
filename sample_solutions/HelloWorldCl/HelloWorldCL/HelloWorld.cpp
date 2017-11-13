@@ -77,13 +77,12 @@ float summiere(float *f, int size)
 int main(int argc, char* argv[])
 {
 
-
-
 	/*Step1: Getting platforms and choose an available one.*/
-	cl_uint numPlatforms;	//the NO. of platforms
-	cl_platform_id platform = NULL;	//the chosen platform
-	cl_int	status = clGetPlatformIDs(0, NULL, &numPlatforms);
-	if (status != CL_SUCCESS)
+	cl_uint         numPlatforms;	        //the NO. of platforms
+	cl_platform_id  platform     = NULL;	//the chosen platform
+	cl_int	        status       = clGetPlatformIDs(0, NULL, &numPlatforms);
+
+    if (status != CL_SUCCESS)
 	{
 		cout << "Error: Getting platforms!" << endl;
 		return FAILURE;
@@ -92,16 +91,17 @@ int main(int argc, char* argv[])
 	/*For clarity, choose the first available platform. */
 	if(numPlatforms > 0)
 	{
-		cl_platform_id* platforms = (cl_platform_id* )malloc(numPlatforms* sizeof(cl_platform_id));
-		status = clGetPlatformIDs(numPlatforms, platforms, NULL);
-		platform = platforms[0];
+		cl_platform_id* platforms   = (cl_platform_id* )malloc(numPlatforms* sizeof(cl_platform_id));
+		status                      = clGetPlatformIDs(numPlatforms, platforms, NULL);
+		platform                    = platforms[0];
 		free(platforms);
 	}
 
-	/*Step 2:Query the platform and choose the first GPU device if has one.Otherwise use the CPU as device.*/
+	/*Step 2:Query the platform and choose the first GPU device if has one. Otherwise use the CPU as device.*/
 	cl_uint				numDevices = 0;
 	cl_device_id        *devices;
-	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);	
+	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
+
 	if (numDevices == 0)	//no GPU available.
 	{
 		cout << "No GPU device available." << endl;

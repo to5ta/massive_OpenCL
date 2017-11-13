@@ -25,9 +25,9 @@ public:
 	int isValid() {return valid;}
 
 	
-	cl_context context;
-	cl_command_queue commandQueue;
-	cl_program program;
+	cl_context 			context;
+	cl_command_queue 	commandQueue;
+	cl_program 			program;
 	
 	cl_kernel matadd_kernel;
 
