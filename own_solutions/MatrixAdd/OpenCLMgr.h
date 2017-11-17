@@ -29,7 +29,8 @@ public:
 	cl_command_queue 	commandQueue;
 	cl_program 			program;
 	
-	cl_kernel matadd_kernel;
+	cl_kernel           matadd_kernel;
+    cl_kernel           matmul_kernel;
 
 private:
 	static int convertToString(const char *filename, std::string& s);

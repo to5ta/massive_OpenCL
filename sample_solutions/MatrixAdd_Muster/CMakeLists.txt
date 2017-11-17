@@ -10,7 +10,6 @@ set(SOURCE_FILES
         Matrix.h
         MatrixMain.cpp
         OpenCLMgr.cpp
-        OpenCLMgr.h
-        Matrix_Kernel.cl)
+        OpenCLMgr.h)
 
 add_executable(MatrixAdd ${SOURCE_FILES})

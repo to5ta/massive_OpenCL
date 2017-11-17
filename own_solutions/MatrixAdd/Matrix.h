@@ -12,12 +12,33 @@ public:
 	Matrix();
 	Matrix(int w, int h);
 	Matrix(const Matrix& m);
+    Matrix(int w, int h, float *data);
 
 	Matrix& operator=(const Matrix& m);
 	Matrix operator+(const Matrix& m);
+    Matrix operator*(const Matrix& m);
+    int operator==(const Matrix& m);
 
 	cl_float& operator[](int index);
 	cl_float& Elem(int ix, int iy);
+
+    void plot(void);
+
+	void info(void){
+		printf("Width:  %5i\n", width);
+		printf("Height: %5i\n", height);
+	}
+
+	void info(string s){
+		cout << s << endl;
+		info();
+	}
+
+    static void setUseGPU(int b){
+        useGPU = b;
+        // printf("set useGPU to %i", b);
+        return;
+    }
 	
 private:
 

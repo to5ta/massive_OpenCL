@@ -1,10 +1,10 @@
 /**********************************************************************
-Copyright ©2013 Advanced Micro Devices, Inc. All rights reserved.
+Copyright ï¿½2013 Advanced Micro Devices, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
-•	Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-•	Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or
+ï¿½	Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ï¿½	Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or
  other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -39,6 +39,31 @@ __kernel void MatAddKernel( int Awidth, int Aheight, __global float* Aelements,
 	int col = get_global_id(0);
 	int row = get_global_id(1);
 
-	// TODO
+    Celements[col + Cwidth*row] = Aelements[row+Cwidth*col] + Belements[row+Cwidth*col];
 
+}
+
+
+// Matrix addition kernel called by MatAddHost()
+__kernel void MatMulKernel( int Awidth, int Aheight, __global float* Aelements,
+                            int Bwidth, int Bheight, __global float* Belements,
+                            int Cwidth, int Cheight, __global float* Celements)
+{
+    Matrix A = { Awidth, Aheight, Aelements };
+    Matrix B = { Bwidth, Bheight, Belements };
+    Matrix C = { Cwidth, Cheight, Celements };
+
+	// __local float sum = 0;
+	// barrier(CLK_LOCAL_MEM_FENCE);
+
+    int col = get_global_id(0);
+    int row = get_global_id(1);
+
+
+	if(col<Cwidth && row<Cheight){
+		Celements[col+row*Cwidth] = 0.f;
+		for(int index=0; index<Awidth; index++) {
+	    	Celements[col+row*Cwidth] += Aelements[index+row*Cwidth] * Belements[col+Bwidth*index];
+	    }
+	}
 }
