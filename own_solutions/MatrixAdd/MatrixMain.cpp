@@ -14,6 +14,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ********************************************************************/
 
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_BRIGHTGREEN   "\x1b[1;32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
+#define TESTOK "\x1b[32mOK\x1b[0m"
+#define TESTOKRGB "\x1b[38;2;255;0;255mOK\x1b[0m"
+#define TESTFAILED "\x1b[31mFAILED\x1b[0m"
+
+
 // For clarity,error checking has been omitted.
 
 #include <CL/cl.h>
@@ -72,18 +86,22 @@ int main(int argc, char* argv[])
 
     C = R*B;
 
-    R.plot();
-    B.plot();
-    C.plot();
+//    R.plot();
+//    B.plot();
+//    C.plot();
 
-    int size = 64;
+    int size = 5;
 
-    for(int i=0; i<5; i++){
+    for(int i=0; i<4; i++){
 
         size = size*2;
 
-        Matrix F(size,size);
-        Matrix G(size,size);
+        float dat[size*size] = {0};
+        Matrix F(size,size, dat);
+        Matrix G(size,size, dat);
+
+        F.info("F");
+
         Matrix M_GPU;
         Matrix M_CPU;
 
@@ -96,6 +114,7 @@ int main(int argc, char* argv[])
         Matrix::setUseGPU(1);
         start = clock();
         M_GPU = F*G;
+        // M_GPU.plot();
         end = clock();
         gpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC*1000.f;
         cout <<"  Duration GPU: " << gpu_time_used <<  " ms" << endl;
@@ -104,17 +123,20 @@ int main(int argc, char* argv[])
         start = clock();
         M_CPU = F*G;
         end = clock();
+        // M_CPU.plot();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC*1000.f;
         cout <<"  Duration CPU: " << cpu_time_used <<  " ms" << endl;
 
 //        M_GPU.info("GPU");
 //        M_CPU.info("CPU");
 
-        if(M_CPU==M_GPU) {
-            // cout << "M_CPU and M_GPU match!" << endl;
+        if(M_CPU==F) {
+            cout << "M_CPU == M_GPU? [" << TESTOK << "]\n" << endl;
+            // cout << "M_CPU == M_GPU? [" << TESTOKRGB << "]\n" << endl;
         }
         else
-            cout << "M_CPU and M_GPU don't match!" << endl;
+            cout << "M_CPU == M_GPU? [" << TESTFAILED << "]\n" << endl;
+
     }
 
 

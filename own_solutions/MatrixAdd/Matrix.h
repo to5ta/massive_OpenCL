@@ -2,8 +2,11 @@
 #define MATRIX_H
 
 #include <CL/cl.h>
-
+#define MATRIX_NEW_RANDOM 0
+#define MATRIX_NEW_ZEROS 1
 #include "OpenCLMgr.h"
+
+
 
 class Matrix {
 public:
@@ -13,6 +16,7 @@ public:
 	Matrix(int w, int h);
 	Matrix(const Matrix& m);
     Matrix(int w, int h, float *data);
+	Matrix(int w, int h, int TYPE);
 
 	Matrix& operator=(const Matrix& m);
 	Matrix operator+(const Matrix& m);

@@ -41,9 +41,28 @@ Matrix::Matrix(int w, int h, float *init_data) {
 	width = w;
 	height = h;
 	data = new cl_float[width*height];
-    memcpy(data, init_data, width*height*sizeof(cl_float));
 
+	memcpy(data, init_data, width*height*sizeof(cl_float));
 }
+
+
+Matrix::Matrix(int w, int h, int TYPE) {
+	width = w;
+	height = h;
+	if(TYPE==MATRIX_NEW_ZEROS) {
+		cl_float data[width*height] = {0};
+	}
+	if(TYPE==MATRIX_NEW_RANDOM) {
+		data = new cl_float[width*height];
+		for(int i=0; i<w*h; i++){
+			data[i] = rand()/10000.f;
+		}
+	}
+
+	// memcpy(data, init_data, width*height*sizeof(cl_float));
+}
+
+
 
 
 Matrix::~Matrix()
@@ -202,13 +221,22 @@ Matrix Matrix::operator*(const Matrix& m)
             //CHECK_SUCCESS("Error: setting kernel argument!")
 
 
-			int local_NDRange = 8;
-			int global_NDRange = (result.width/local_NDRange)+1;
+//			int local_NDRange = 8;
+//			int global_NDRange = (result.width/local_NDRange)+1;
             // Run the kernel.
 //			size_t local_work_size[2] 	= {local_NDRange, local_NDRange};
 //			size_t global_work_size[2] 	= {global_NDRange, global_NDRange};
-			size_t global_work_size[2] = {result.width, result.height};
-			size_t local_work_size[2] = {result.width, result.height};
+
+//			// Default Code
+//			size_t global_work_size[2] = {result.width, result.height};
+//			size_t local_work_size[2] = {result.width, result.height};
+
+
+			size_t gws_0 = ((result.width-1)/16+1)*16;
+			size_t gws_1 = ((result.height-1)/16+1)*16;
+
+			size_t global_work_size[2] = {gws_0, gws_1};
+			size_t local_work_size[2] = {16, 16};
 
 
             status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmul_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);

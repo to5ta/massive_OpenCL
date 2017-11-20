@@ -59,11 +59,12 @@ __kernel void MatMulKernel( int Awidth, int Aheight, __global float* Aelements,
     int col = get_global_id(0);
     int row = get_global_id(1);
 
-
+    float res=0.f;
 	if(col<Cwidth && row<Cheight){
 		Celements[col+row*Cwidth] = 0.f;
 		for(int index=0; index<Awidth; index++) {
-	    	Celements[col+row*Cwidth] += Aelements[index+row*Cwidth] * Belements[col+Bwidth*index];
+	    	res += Aelements[index+row*Cwidth] * Belements[col+Bwidth*index];
 	    }
-	}
+        Celements[col+row*Cwidth] = res;
+    }
 }

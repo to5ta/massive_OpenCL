@@ -84,6 +84,7 @@ cl_int OpenCLMgr::init()
 	// For clarity, choose the first available platform.
 	if(numPlatforms > 0)
 	{
+		cout << "Found " << numPlatforms << " platforms." << endl;
 		cl_platform_id* platforms = (cl_platform_id* )malloc(numPlatforms* sizeof(cl_platform_id));
 		status = clGetPlatformIDs(numPlatforms, platforms, NULL);
 		platform = platforms[0];
@@ -115,6 +116,10 @@ cl_int OpenCLMgr::init()
 	
 	if (deviceNo>=numDevices)
 		deviceNo=0;
+
+	char devname[100] = {0};
+	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_NAME, 100, devname, NULL);
+	cout << "Using Device: "<< devname << endl;
 
 	// Create context
 	context = clCreateContext(NULL,1, devices+deviceNo,NULL,NULL,NULL);
