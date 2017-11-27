@@ -17,6 +17,7 @@ OpenCLMgr::OpenCLMgr()
 
 	matadd_kernel = 0;
     matmul_kernel = 0;
+	matmulshared_kernel = 0;
 
 	valid = (init()==SUCCESS);
 }
@@ -151,12 +152,16 @@ cl_int OpenCLMgr::init()
     }
 
 	// Create kernel objects 
-//	matadd_kernel = clCreateKernel(program,"MatAddKernel", &status);
-//	CHECK_SUCCESS("Error: creating MatAddKernel kernel")
-
+	matadd_kernel = clCreateKernel(program,"MatAddKernel", &status);
+	CHECK_SUCCESS("Error: creating MatAddKernel kernel")
 
     matmul_kernel = clCreateKernel(program,"MatMulKernel", &status);
     CHECK_SUCCESS("Error: creating MatMulKernel kernel")
+
+	matmulshared_kernel = clCreateKernel(program,"MatMulKernel", &status);
+    CHECK_SUCCESS("Error: creating MatMulKernel kernel")
+
+
 
 
     if (devices != NULL)

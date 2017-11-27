@@ -31,6 +31,7 @@ public:
 	
 	cl_kernel           matadd_kernel;
     cl_kernel           matmul_kernel;
+    cl_kernel           matmulshared_kernel;
 
 private:
 	static int convertToString(const char *filename, std::string& s);

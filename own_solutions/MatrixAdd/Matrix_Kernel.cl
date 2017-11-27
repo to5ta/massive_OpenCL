@@ -68,3 +68,82 @@ __kernel void MatMulKernel( int Awidth, int Aheight, __global float* Aelements,
         Celements[col+row*Cwidth] = res;
     }
 }
+
+// Matrix addition kernel called by MatAddHost()
+__kernel void MatMulSharedKernel( int Awidth, int Aheight, __global float* Aelements,
+                            int Bwidth, int Bheight, __global float* Belements,
+                            int Cwidth, int Cheight, __global float* Celements)
+{
+    Matrix A = { Awidth, Aheight, Aelements };
+    Matrix B = { Bwidth, Bheight, Belements };
+    Matrix C = { Cwidth, Cheight, Celements };
+
+    // __local float sum = 0;
+    // barrier(CLK_LOCAL_MEM_FENCE);
+
+    int gid0 = get_group_id(0);
+    int gid1 = get_group_id(1);
+    int grp_max_0 = get_num_groups(0);
+    int grp_max_1 = get_num_groups(1);
+
+    int lid0 = get_local_id(0);
+    int lid1 = get_local_id(1);
+    int l_max_0 = get_local_size(0);
+    int l_max_1 = get_local_size(1);
+
+    int col = get_global_id(0);
+    int row = get_global_id(1);
+
+    __local float patchA[256];
+    __local float patchB[256];
+
+
+
+    for(int patch_id=0; patch_id<(Awidth-1)/BLOCK_SIZE+1; patch_id++){
+        int Ax = patch_id*BLOCK_SIZE;
+        int Ay = gid1*BLOCK_SIZE;
+        int Bx = gid0*BLOCK_SIZE;
+        int By = patch_id*BLOCK_SIZE;
+        patchA[lid0 + lid1*l_max_0] = Aelements[Ax + Awidth*Ay];
+        patchB[lid0 + lid1*l_max_0] = Belements[Bx + Bwidth*By];
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        float sum = 0.f;
+        for(int index=0; index<l_max_0; index++) {
+            sum += patchA[index + l_max_0*lid1] * patchB[lid0 + l_max_0*index];
+        }
+
+        Celements[col+row*Cwidth] += sum;
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+
+
+
+
+
+
+//
+//    // loop over all patches in C
+//    for(int gr=0; gr<grp_max_1; gr++){
+//        for(int gc=0; gc<grp_max_0; gc++) {
+//
+//            if(col<Cwidth && row<Cheight){
+//                // buffer patch from A
+//                patchA[lid0 + lid1*l_max_0] = Aelements[col + row*Awidth];
+//
+//                // buffer patch from B
+//                patchB[lid0 + lid1*l_max_0] = Belements[col + row*Bwidth];
+//
+//                barrier(CLK_LOCAL_MEM_FENCE);
+//
+//                float sum = 0.f;
+//                for(int index=0; index<l_max_0; index++) {
+//                    sum += patchA[index + l_max_0*lid1] * patchB[lid0 + l_max_0*index];
+//                }
+//                Celements[col+row*Cwidth] += sum;
+//            }
+//
+//            barrier(CLK_LOCAL_MEM_FENCE);
+//        }
+//    }
+ }

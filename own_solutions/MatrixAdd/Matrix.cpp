@@ -11,6 +11,7 @@ using namespace std;
 
 cl_float Matrix::dummy;
 int Matrix::useGPU = 0;
+int Matrix::useSharedMemory=0;
 OpenCLMgr* Matrix::OpenCLmgr = NULL;;
 
 
@@ -50,12 +51,31 @@ Matrix::Matrix(int w, int h, int TYPE) {
 	width = w;
 	height = h;
 	if(TYPE==MATRIX_NEW_ZEROS) {
-		cl_float data[width*height] = {0};
+		data = new cl_float[width*height];
+		for(int i=0; i<w*h; i++){
+			data[i] = 0.f;
+		}
+
 	}
 	if(TYPE==MATRIX_NEW_RANDOM) {
 		data = new cl_float[width*height];
 		for(int i=0; i<w*h; i++){
-			data[i] = rand()/10000.f;
+			data[i] = rand()/10000000.f;
+		}
+	}
+	if(TYPE==MATRIX_NEW_ONES) {
+		data = new cl_float[width*height];
+		for(int i=0; i<w*h; i++){
+			data[i] = 1.f;
+		}
+	}
+	if(TYPE==MATRIX_NEW_IDENTITY) {
+		data = new cl_float[width*height];
+		for(int i=0; i<w*h; i++){
+			if(i/w==i%w)
+				data[i] = 1.f;
+			else
+				data[i] = 0.f;
 		}
 	}
 
@@ -92,6 +112,13 @@ int Matrix::operator==(const Matrix& m)
 		return 0;
 	else
 		return 1;
+
+//	for(int i=0; i<width*height; i++){
+//		if(m.data[i]!=data[i])
+//			printf("%i: %f(own) != %f",i, data[i], m.data[i]);
+//			return false;
+//	}
+//	return true;
 }
 
 
@@ -189,10 +216,64 @@ Matrix Matrix::operator*(const Matrix& m)
             }
             return result;
         }
+        else if(useSharedMemory && useGPU){
+
+			printf("Using GPU (SharedMemory)..\n");
+			cl_int status;
+
+			// create buffers
+			cl_mem Buffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, width*height*sizeof(cl_float), NULL, NULL);
+			status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, Buffer, CL_TRUE, 0, width*height*sizeof(cl_float), data, 0, NULL, NULL);
+			//CHECK_SUCCESS("Error: writing buffer!")
+
+			cl_mem BBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, m.width*m.height*sizeof(cl_float), NULL, NULL);
+			status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, BBuffer, CL_TRUE, 0, m.width*m.height*sizeof(cl_float), m.data, 0, NULL, NULL);
+			//CHECK_SUCCESS("Error: writing buffer!")
+
+			cl_mem CBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_WRITE_ONLY , result.width*result.height*sizeof(cl_float), NULL, NULL);
+
+			// Set kernel arguments.
+			status = clSetKernelArg(OpenCLmgr->matmulshared_kernel,  0, sizeof(cl_int), (void *)&width);
+			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 1, sizeof(cl_int), (void *)&height);
+			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 2, sizeof(cl_mem), (void *)&Buffer);
+
+			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 3, sizeof(cl_int), (void *)&m.width);
+			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 4, sizeof(cl_int), (void *)&m.height);
+			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 5, sizeof(cl_mem), (void *)&BBuffer);
+
+			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 6, sizeof(cl_int), (void *)&result.width);
+			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 7, sizeof(cl_int), (void *)&result.height);
+			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 8, sizeof(cl_mem), (void *)&CBuffer);
+			//CHECK_SUCCESS("Error: setting kernel argument!")
+
+
+			size_t gws_0 = ((result.width-1)/16+1)*16;
+			size_t gws_1 = ((result.height-1)/16+1)*16;
+
+			size_t global_work_size[2] = {gws_0, gws_1};
+			size_t local_work_size[2] = {16, 16};
+
+
+			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmul_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
+			// CHECK_SUCCESS("Error: enqueuing kernel!")
+
+			// Read the output back to host memory.
+			status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, CBuffer, CL_TRUE, 0, result.width*result.height*sizeof(cl_float), result.data, 0, NULL, NULL);
+			//CHECK_SUCCESS("Error: reading buffer!")
+
+			// release buffers
+			status = clReleaseMemObject(Buffer);
+			status = clReleaseMemObject(BBuffer);
+			status = clReleaseMemObject(CBuffer);
+
+			return result;
+        }
+
+
 
         else	// use GPU
         {
-			//printf("Using GPU..\n");
+			printf("Using GPU..\n");
             cl_int status;
 
             // create buffers
@@ -221,23 +302,9 @@ Matrix Matrix::operator*(const Matrix& m)
             //CHECK_SUCCESS("Error: setting kernel argument!")
 
 
-//			int local_NDRange = 8;
-//			int global_NDRange = (result.width/local_NDRange)+1;
-            // Run the kernel.
-//			size_t local_work_size[2] 	= {local_NDRange, local_NDRange};
-//			size_t global_work_size[2] 	= {global_NDRange, global_NDRange};
-
 //			// Default Code
-//			size_t global_work_size[2] = {result.width, result.height};
-//			size_t local_work_size[2] = {result.width, result.height};
-
-
-			size_t gws_0 = ((result.width-1)/16+1)*16;
-			size_t gws_1 = ((result.height-1)/16+1)*16;
-
-			size_t global_work_size[2] = {gws_0, gws_1};
-			size_t local_work_size[2] = {16, 16};
-
+			size_t global_work_size[2] = {result.width, result.height};
+			size_t local_work_size[2] = {result.width, result.height};
 
             status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmul_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
             // CHECK_SUCCESS("Error: enqueuing kernel!")
@@ -292,7 +359,7 @@ void Matrix::plot(void)
             if(y==0 and x!=0)
                 printf(" [");
 
-			printf("%3.1f",this->Elem(x,y));
+			printf("%7.1f",this->Elem(x,y));
 			if(y+2<=this->width)
 				printf(", ");
             else if(x+1==this->height)

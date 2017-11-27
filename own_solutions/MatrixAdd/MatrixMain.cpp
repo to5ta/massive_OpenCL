@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
 
     Matrix::setUseGPU(1);
 
+
     float data[] = {0.496977467838,  0.913963293057,  0.652302605086,  0.179985943407,  0.899937338564, \
                    0.0800485928486, 0.0575882535388,  0.423745480297,  0.125236501884,  0.847683123528, \
                     0.757251050449,  0.940613928412,  0.898778373763,  0.489139256615,  0.183107854405,  \
@@ -83,27 +84,25 @@ int main(int argc, char* argv[])
 //    A.info("A");
 //    B.info("B");
 //    C.info("C");
-
-    C = R*B;
+//    C = R*B;
 
 //    R.plot();
 //    B.plot();
 //    C.plot();
 
-    int size = 5;
+    int size = 8;
 
-    for(int i=0; i<4; i++){
+    for(int i=0; i<1; i++){
 
         size = size*2;
 
         float dat[size*size] = {0};
-        Matrix F(size,size, dat);
-        Matrix G(size,size, dat);
-
-        F.info("F");
+        Matrix F(size,size, MATRIX_NEW_IDENTITY);
+        Matrix G(size,size, MATRIX_NEW_RANDOM);
 
         Matrix M_GPU;
-        Matrix M_CPU;
+        Matrix M_GPU_SHARED;
+
 
         clock_t start, end;
         double gpu_time_used;
@@ -111,31 +110,41 @@ int main(int argc, char* argv[])
 
         cout << "["<< size <<"x"<< size <<"]*["<< size <<"x"<< size <<"]" << endl;
 
-        Matrix::setUseGPU(1);
+        Matrix::setUseGPU(0);
+        Matrix::setUseSharedMemory(1);
         start = clock();
         M_GPU = F*G;
         // M_GPU.plot();
         end = clock();
         gpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC*1000.f;
-        cout <<"  Duration GPU: " << gpu_time_used <<  " ms" << endl;
+        cout <<"  Duration GPU (Shared): " << gpu_time_used <<  " ms" << endl;
 
-        Matrix::setUseGPU(0);
+        Matrix::setUseGPU(1);
+        Matrix::setUseSharedMemory(1);
+//        Matrix::setUseGPU(0);
         start = clock();
-        M_CPU = F*G;
+        M_GPU_SHARED = F*G;
         end = clock();
         // M_CPU.plot();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC*1000.f;
-        cout <<"  Duration CPU: " << cpu_time_used <<  " ms" << endl;
+        cout <<"  Duration GPU: " << cpu_time_used <<  " ms" << endl;
 
 //        M_GPU.info("GPU");
 //        M_CPU.info("CPU");
 
-        if(M_CPU==F) {
+        if(M_GPU_SHARED==M_GPU) {
             cout << "M_CPU == M_GPU? [" << TESTOK << "]\n" << endl;
             // cout << "M_CPU == M_GPU? [" << TESTOKRGB << "]\n" << endl;
         }
-        else
+        else {
             cout << "M_CPU == M_GPU? [" << TESTFAILED << "]\n" << endl;
+        }
+
+        // F.plot("F");
+        // G.plot("G");
+        M_GPU.plot("GPU");
+        M_GPU_SHARED.plot("GPU SHARED");
+
 
     }
 
