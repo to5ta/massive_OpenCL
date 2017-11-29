@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 //    B.plot();
 //    C.plot();
 
-    int size = 5;
+    int size = 512;
 
     for(int i=0; i<1; i++){
 
@@ -117,12 +117,14 @@ int main(int argc, char* argv[])
         M_CPU.compare(M_GPU);
         M_CPU.compare(M_GPU_SHARED);
 
-        F.plot("F");
-        G.plot("G");
+        if(size<20){
+            F.plot("F");
+            G.plot("G");
 
-        M_CPU.plot("CPU");
-        M_GPU.plot("GPU");
-        M_GPU_SHARED.plot("GPU_SHARED");
+            M_CPU.plot("CPU");
+            M_GPU.plot("GPU");
+            M_GPU_SHARED.plot("GPU_SHARED");
+        }
 
 
     }

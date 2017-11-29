@@ -101,32 +101,35 @@ __kernel void MatMulSharedKernel( int Awidth, int Aheight, __global float* Aelem
 
     __local float patchA[256];
     __local float patchB[256];
-    __local float patchC[256];
+//    __local float patchC[256];
 
     // init with zero, another time
-    patchC[lid0 + lid1*l_max_0] = 0.f;
+//    patchC[lid0 + lid1*l_max_0] = 0.f;
     barrier(CLK_LOCAL_MEM_FENCE);
 
+    float Cresult = 0.f;
 
     for(int patch_id=0; patch_id<(Awidth-1)/BLOCK_SIZE+1; patch_id++){
 
         int Ax = patch_id*BLOCK_SIZE+lid0;
         int Ay = grp_id1*BLOCK_SIZE+lid1;
-        patchA[lid0 + lid1*l_max_0] = Aelements[Ax + Awidth*Ay];
-//        if(Ax<Awidth && Ay<Aheight or 1) {
-//            patchA[lid0 + lid1*l_max_0] = Aelements[Ax + Awidth*Ay];
-//        } else {
-//            patchA[lid0 + lid1*l_max_0] = 0.f;
-//        }
+//        patchA[lid0 + lid1*l_max_0] = Aelements[Ax + Awidth*Ay];
+        // memory safety considerations
+        if(Ax<Awidth && Ay<Aheight) {
+            patchA[lid0 + lid1*l_max_0] = Aelements[Ax + Awidth*Ay];
+        } else {
+            patchA[lid0 + lid1*l_max_0] = 0.f;
+        }
 
         int By = patch_id*BLOCK_SIZE+lid1;
         int Bx = grp_id0*BLOCK_SIZE+lid0;
-        patchB[lid0 + lid1*l_max_0] = Belements[Bx + Bwidth*By];
-//        if(Bx<Bwidth && By<Bheight or 1) {
-//            patchB[lid0 + lid1*l_max_0] = Belements[Bx + Bwidth*By];
-//        } else {
-//            patchB[lid0 + lid1*l_max_0] = 0.f;
-//        }
+//        patchB[lid0 + lid1*l_max_0] = Belements[Bx + Bwidth*By];
+        // memory safety considerations
+        if(Bx<Bwidth && By<Bheight) {
+            patchB[lid0 + lid1*l_max_0] = Belements[Bx + Bwidth*By];
+        } else {
+            patchB[lid0 + lid1*l_max_0] = 0.f;
+        }
         barrier(CLK_LOCAL_MEM_FENCE);
 
         float sum = 0.f;
@@ -134,12 +137,14 @@ __kernel void MatMulSharedKernel( int Awidth, int Aheight, __global float* Aelem
             sum += patchA[index + l_max_0*lid1] * patchB[lid0 + l_max_0*index];
         }
 
-        patchC[lid0 + lid1*l_max_0] += sum;
-        barrier(CLK_LOCAL_MEM_FENCE);
+//        patchC[lid0 + lid1*l_max_0] += sum;
+        Cresult += sum;
+//        barrier(CLK_LOCAL_MEM_FENCE);
 
     }
 
-    Celements[col+row*Cwidth] += sum;
+    Celements[col+row*Cwidth] = Cresult;
+//    barrier(CLK_LOCAL_MEM_FENCE);
 }
 
 

@@ -114,7 +114,7 @@ int Matrix::operator==(const Matrix& m)
 			if(m.data[i]!=this->data[i]){
 				cl_float diff = abs(m.data[i]-this->data[i]);
 				if(diff>TOLERANCE){
-					printf("ERROR ID %i: DIFF: %f = abs(%f-%f)\n", i, diff, m.data[i], this->data[i]);
+					printf("ERROR ID %i: DIFF: %f  '%s': %f  '%s': %f\n", i, diff, m.name.c_str(), m.data[i], this->name.c_str(), this->data[i]);
 					return 0;
 				} else if(WARN_TOLERANCE) {
 					printf("WARNING ID %i: DIFF: %f = abs(%f-%f)\n", i, diff, m.data[i], this->data[i]);

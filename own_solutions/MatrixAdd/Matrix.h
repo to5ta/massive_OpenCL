@@ -5,7 +5,7 @@
 #define TESTOKRGB "\x1b[38;2;255;0;255mOK\x1b[0m"
 #define TESTFAILED "\x1b[31mFAILED\x1b[0m"
 
-#define TOLERANCE 0.1f
+#define TOLERANCE 0.001f
 #define WARN_TOLERANCE 0
 
 #include <CL/cl.h>
