@@ -218,7 +218,7 @@ Matrix Matrix::operator*(const Matrix& m)
         }
         else if(useSharedMemory && useGPU){
 
-			printf("Using GPU (SharedMemory)..\n");
+//			printf("Using GPU (SharedMemory)..\n");
 			cl_int status;
 
 			// create buffers
@@ -255,7 +255,8 @@ Matrix Matrix::operator*(const Matrix& m)
 
 
 			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmul_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
-			// CHECK_SUCCESS("Error: enqueuing kernel!")
+			printf("status %i", status);
+            // CHECK_SUCCESS("Error: enqueuing kernel!")
 
 			// Read the output back to host memory.
 			status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, CBuffer, CL_TRUE, 0, result.width*result.height*sizeof(cl_float), result.data, 0, NULL, NULL);
@@ -273,7 +274,7 @@ Matrix Matrix::operator*(const Matrix& m)
 
         else	// use GPU
         {
-			printf("Using GPU..\n");
+//			printf("Using GPU..\n");
             cl_int status;
 
             // create buffers

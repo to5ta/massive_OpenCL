@@ -96,14 +96,19 @@ __kernel void MatMulSharedKernel( int Awidth, int Aheight, __global float* Aelem
 
     __local float patchA[256];
     __local float patchB[256];
+    __local float patchC[256];
+
+    patchC[lid0 + lid1*l_max_0] = 0.f;
+    barrier(CLK_LOCAL_MEM_FENCE);
+
 
 
 
     for(int patch_id=0; patch_id<(Awidth-1)/BLOCK_SIZE+1; patch_id++){
-        int Ax = patch_id*BLOCK_SIZE;
-        int Ay = gid1*BLOCK_SIZE;
-        int Bx = gid0*BLOCK_SIZE;
-        int By = patch_id*BLOCK_SIZE;
+        int Ax = patch_id*BLOCK_SIZE+lid0;
+        int Ay = gid1*BLOCK_SIZE+lid1;
+        int Bx = gid0*BLOCK_SIZE+lid0;
+        int By = patch_id*BLOCK_SIZE+lid1;
         patchA[lid0 + lid1*l_max_0] = Aelements[Ax + Awidth*Ay];
         patchB[lid0 + lid1*l_max_0] = Belements[Bx + Bwidth*By];
         barrier(CLK_LOCAL_MEM_FENCE);
@@ -113,8 +118,10 @@ __kernel void MatMulSharedKernel( int Awidth, int Aheight, __global float* Aelem
             sum += patchA[index + l_max_0*lid1] * patchB[lid0 + l_max_0*index];
         }
 
-        Celements[col+row*Cwidth] += sum;
+        patchC[lid0 + lid1*l_max_0] += sum;
         barrier(CLK_LOCAL_MEM_FENCE);
+
+//        Celements[col+row*Cwidth] += sum;
     }
 
 

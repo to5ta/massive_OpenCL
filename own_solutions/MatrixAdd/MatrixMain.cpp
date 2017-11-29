@@ -90,11 +90,11 @@ int main(int argc, char* argv[])
 //    B.plot();
 //    C.plot();
 
-    int size = 8;
+    int size = 32;
 
     for(int i=0; i<1; i++){
 
-        size = size*2;
+//        size = size;
 
         float dat[size*size] = {0};
         Matrix F(size,size, MATRIX_NEW_IDENTITY);
@@ -103,6 +103,8 @@ int main(int argc, char* argv[])
         Matrix M_GPU;
         Matrix M_GPU_SHARED;
 
+        Matrix M_CPU;
+
 
         clock_t start, end;
         double gpu_time_used;
@@ -110,14 +112,14 @@ int main(int argc, char* argv[])
 
         cout << "["<< size <<"x"<< size <<"]*["<< size <<"x"<< size <<"]" << endl;
 
-        Matrix::setUseGPU(0);
-        Matrix::setUseSharedMemory(1);
+        Matrix::setUseGPU(1);
+        Matrix::setUseSharedMemory(0);
         start = clock();
         M_GPU = F*G;
         // M_GPU.plot();
         end = clock();
         gpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC*1000.f;
-        cout <<"  Duration GPU (Shared): " << gpu_time_used <<  " ms" << endl;
+        cout <<"  Duration GPU:                 " << gpu_time_used <<  " ms" << endl;
 
         Matrix::setUseGPU(1);
         Matrix::setUseSharedMemory(1);
@@ -127,7 +129,7 @@ int main(int argc, char* argv[])
         end = clock();
         // M_CPU.plot();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC*1000.f;
-        cout <<"  Duration GPU: " << cpu_time_used <<  " ms" << endl;
+        cout <<"  Duration GPU (Shared Memory): " << cpu_time_used <<  " ms" << endl;
 
 //        M_GPU.info("GPU");
 //        M_CPU.info("CPU");
@@ -142,8 +144,13 @@ int main(int argc, char* argv[])
 
         // F.plot("F");
         // G.plot("G");
-        M_GPU.plot("GPU");
-        M_GPU_SHARED.plot("GPU SHARED");
+
+//        M_GPU.plot("GPU");
+//        M_GPU_SHARED.plot("GPU SHARED");
+
+        Matrix::setUseGPU(0);
+        M_CPU = F*G;
+//        M_CPU.plot("CPU");
 
 
     }
