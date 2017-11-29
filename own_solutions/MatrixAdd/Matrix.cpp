@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <cmath>
 
 using namespace std;
 
@@ -60,7 +61,7 @@ Matrix::Matrix(int w, int h, int TYPE) {
 	if(TYPE==MATRIX_NEW_RANDOM) {
 		data = new cl_float[width*height];
 		for(int i=0; i<w*h; i++){
-			data[i] = rand()/10000000.f;
+			data[i] = (cl_float)rand()/RAND_MAX;
 		}
 	}
 	if(TYPE==MATRIX_NEW_ONES) {
@@ -108,10 +109,27 @@ int Matrix::operator==(const Matrix& m)
 	if(width!=m.width or height!=m.height)
 		return 0;
 
-	if(memcmp(data, m.data, width*height*sizeof(cl_float))!=0)
-		return 0;
-	else
+	else {
+		for(int i=0; i<m.height*m.width; i++){
+			if(m.data[i]!=this->data[i]){
+				cl_float diff = abs(m.data[i]-this->data[i]);
+				if(diff>TOLERANCE){
+					printf("ERROR ID %i: DIFF: %f = abs(%f-%f)\n", i, diff, m.data[i], this->data[i]);
+					return 0;
+				} else if(WARN_TOLERANCE) {
+					printf("WARNING ID %i: DIFF: %f = abs(%f-%f)\n", i, diff, m.data[i], this->data[i]);
+//					printf("WARNING: Index %i: abs(%f-%f)=%f\n", i, m.data[i], this->data[i], diff);
+				}
+			}
+		}
 		return 1;
+	}
+
+
+//	if(memcmp(data, m.data, width*height*sizeof(cl_float))!=0)
+//		return 0;
+//	else
+//		return 1;
 
 //	for(int i=0; i<width*height; i++){
 //		if(m.data[i]!=data[i])
@@ -189,13 +207,15 @@ Matrix Matrix::operator+(const Matrix& m)
 
 Matrix Matrix::operator*(const Matrix& m)
 {
+	timingBegin();
     if (width==m.height)
     {
-        Matrix result(m.width, height);
+//        Matrix result(m.width, height);
+        Matrix result(m.width, height, MATRIX_NEW_ZEROS);
 
         if (!useGPU)
         {
-			// printf("Using CPU..\n");
+			 printf("\nUsing CPU..\n");
             // row, column, incrementing index in sum
             int r,c, index;
             float sum, _a, _b, temp;
@@ -214,11 +234,12 @@ Matrix Matrix::operator*(const Matrix& m)
 					result.data[c + r * result.width] = sum;
                 }
             }
+			timingEnd();
             return result;
         }
         else if(useSharedMemory && useGPU){
 
-//			printf("Using GPU (SharedMemory)..\n");
+			printf("\nUsing GPU (SharedMemory)..\n");
 			cl_int status;
 
 			// create buffers
@@ -245,17 +266,22 @@ Matrix Matrix::operator*(const Matrix& m)
 			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 7, sizeof(cl_int), (void *)&result.height);
 			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 8, sizeof(cl_mem), (void *)&CBuffer);
 			//CHECK_SUCCESS("Error: setting kernel argument!")
+//			printf("status %i\n", status);
 
 
+//			printf("Result.Wi")
 			size_t gws_0 = ((result.width-1)/16+1)*16;
 			size_t gws_1 = ((result.height-1)/16+1)*16;
 
 			size_t global_work_size[2] = {gws_0, gws_1};
 			size_t local_work_size[2] = {16, 16};
 
+			printf("Global Work Size: [%i,%i]\n", global_work_size[0], global_work_size[1]);
+			printf("Local Work Size:  [%i,%i]\n", local_work_size[0], local_work_size[1]);
 
-			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmul_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
-			printf("status %i", status);
+			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmulshared_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
+			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmulshared_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
+//			printf("status %i\n", status);
             // CHECK_SUCCESS("Error: enqueuing kernel!")
 
 			// Read the output back to host memory.
@@ -266,15 +292,14 @@ Matrix Matrix::operator*(const Matrix& m)
 			status = clReleaseMemObject(Buffer);
 			status = clReleaseMemObject(BBuffer);
 			status = clReleaseMemObject(CBuffer);
-
+			timingEnd();
 			return result;
         }
 
 
-
-        else	// use GPU
+        else if(useGPU && !useSharedMemory)	// use GPU
         {
-//			printf("Using GPU..\n");
+			printf("\nUsing GPU..\n");
             cl_int status;
 
             // create buffers
@@ -300,7 +325,7 @@ Matrix Matrix::operator*(const Matrix& m)
             status |= clSetKernelArg(OpenCLmgr->matmul_kernel, 6, sizeof(cl_int), (void *)&result.width);
             status |= clSetKernelArg(OpenCLmgr->matmul_kernel, 7, sizeof(cl_int), (void *)&result.height);
             status |= clSetKernelArg(OpenCLmgr->matmul_kernel, 8, sizeof(cl_mem), (void *)&CBuffer);
-            //CHECK_SUCCESS("Error: setting kernel argument!")
+//            CHECK_SUCCESS("Error: setting kernel argument!")
 
 
 //			// Default Code
@@ -318,9 +343,13 @@ Matrix Matrix::operator*(const Matrix& m)
             status = clReleaseMemObject(Buffer);
             status = clReleaseMemObject(BBuffer);
             status = clReleaseMemObject(CBuffer);
-
+			timingEnd();
             return result;
-        }
+        } else {
+			printf("Wrong Parameters: \nuseSharedMemory: %i\nuseGPU: %i", useSharedMemory, useGPU);
+		}
+
+
     }
     else
     {
@@ -360,7 +389,7 @@ void Matrix::plot(void)
             if(y==0 and x!=0)
                 printf(" [");
 
-			printf("%7.1f",this->Elem(x,y));
+			printf("%7.3f",this->Elem(x,y));
 			if(y+2<=this->width)
 				printf(", ");
             else if(x+1==this->height)

@@ -41,7 +41,7 @@ __kernel void summe_kernel(__global int* in, __global int* out)
         }
         lid_max = lid_max/2;
     }
-
+thun
     if(lid==0){
         // make sure everything is done now
         barrier(CLK_LOCAL_MEM_FENCE);
