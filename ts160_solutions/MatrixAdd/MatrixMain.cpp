@@ -44,6 +44,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    cout << "Starting Program.." << endl;
 	OpenCLMgr mgr;
 
 	Matrix::OpenCLmgr = &mgr;
@@ -86,17 +87,22 @@ int main(int argc, char* argv[])
 //    B.plot();
 //    C.plot();
 
-//    int size = 512;
-    int size = 1445;
+       int size = 500;
+//    int size = 1000;
+//    int size = 1440;
 
-    for(int i=0; i<2; i++){
+    for(int i=0; i<1; i++){
 
-        size = size+1;
+//        size = size+100;
 
-        float dat[size*size] = {0};
+//         float dat[size*size] = {0};
 
-        Matrix F(size,size, MATRIX_NEW_RANDOM);
-        Matrix G(size,size, MATRIX_NEW_RANDOM);
+//        Matrix F(size,size, MATRIX_NEW_RANDOM);
+//        Matrix G(size,size, MATRIX_NEW_RANDOM);
+
+        Matrix F(size,size, MATRIX_NEW_ONES);
+        Matrix G(size,size, MATRIX_NEW_IDENTITY);
+//
 
         Matrix M_GPU, M_GPU_SHARED, M_CPU;
         M_GPU.setName("GPU");

@@ -127,6 +127,37 @@ cl_int OpenCLMgr::init()
     cout << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << maxMem << " bytes" << endl;
     cout << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << maxMem/1048576.f << " MB" << endl;
 
+
+	cl_uint devMaxComputeUnits = 0;
+	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(devMaxComputeUnits), &(devMaxComputeUnits), NULL);
+	cout << "CL_DEVICE_MAX_COMPUTE_UNITS: " << devMaxComputeUnits << endl;
+
+	size_t devMaxWorkGroupSize = 0;
+	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(devMaxWorkGroupSize), &(devMaxWorkGroupSize), NULL);
+	cout << "CL_DEVICE_MAX_COMPUTE_UNITS: " << devMaxWorkGroupSize << endl;
+
+	cl_uint devMaxWorkItemDims = 0;
+	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(devMaxWorkItemDims), &(devMaxWorkItemDims), NULL);
+	cout << "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS: " << devMaxWorkItemDims << endl;
+
+
+//	cl_uint devMaxWorkItemDims = 0;
+//	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(devMaxWorkItemDims), &(devMaxWorkItemDims), NULL);
+//	cout << "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS: " << devMaxWorkItemDims << endl;
+
+	size_t maxPerDims[3] = {0};
+	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t)*3, &(maxPerDims), NULL);
+	cout << "CL_DEVICE_MAX_WORK_ITEM_SIZES: " <<  maxPerDims[0] << ", " << maxPerDims[1] << ", " << maxPerDims[2] << endl;
+//
+//	CL_DEVICE_MAX_WORK_ITEM_SIZES
+//
+
+//
+//	CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS
+//	CL_DEVICE_MAX_WORK_ITEM_SIZES
+//	CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS
+//
+
 	// Create context
 	context = clCreateContext(NULL,1, devices+deviceNo,NULL,NULL,NULL);
 	CHECK_SUCCESS("Error: creating OpenCL context")

@@ -276,7 +276,7 @@ Matrix Matrix::operator*(const Matrix& m)
 			size_t global_work_size[2] = {gws_0, gws_1};
 			size_t local_work_size[2] = {16, 16};
 
-			printf("Global Work Size: [%i,%i], ", global_work_size[0], global_work_size[1]);
+			printf("Global Work Size: [%i,%i]\n", global_work_size[0], global_work_size[1]);
 			printf("Local Work Size:  [%i,%i]\n", local_work_size[0], local_work_size[1]);
 
 			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmulshared_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);

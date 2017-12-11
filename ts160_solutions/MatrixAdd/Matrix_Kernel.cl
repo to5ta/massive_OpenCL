@@ -148,6 +148,8 @@ __kernel void MatMulSharedKernel( int Awidth, int Aheight, __global float* Aelem
     if(col<Cwidth && row<Cheight){
         Celements[col+row*Cwidth] = Cresult;
     }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
 }
 
 
