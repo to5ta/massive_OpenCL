@@ -7,6 +7,7 @@
 using namespace std;
 
 #include "OpenCLMgr.h"
+#include "clstatushelper.h"
 
 
 OpenCLMgr::OpenCLMgr()
@@ -80,6 +81,7 @@ cl_int OpenCLMgr::init()
 	cl_uint numPlatforms;	//the NO. of platforms
 	cl_platform_id platform = NULL;	//the chosen platform
 	cl_int	status = clGetPlatformIDs(0, NULL, &numPlatforms);
+    check_error(status);
 	CHECK_SUCCESS("Error: Getting platforms!")
 
 	// For clarity, choose the first available platform.
@@ -88,6 +90,7 @@ cl_int OpenCLMgr::init()
 		cout << "Found " << numPlatforms << " platforms." << endl;
 		cl_platform_id* platforms = (cl_platform_id* )malloc(numPlatforms* sizeof(cl_platform_id));
 		status = clGetPlatformIDs(numPlatforms, platforms, NULL);
+        check_error(status);
 		platform = platforms[0];
 		free(platforms);
 		CHECK_SUCCESS("Error: Getting platforms ids")
@@ -96,7 +99,8 @@ cl_int OpenCLMgr::init()
 	// Query devices and choose a GPU device if has one. Otherwise use the CPU as device.*/
 	cl_uint				numDevices = 0;
 	cl_device_id        *devices;
-	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);	
+	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
+    check_error(status);
 	CHECK_SUCCESS("Error: Getting device ids")
 	if (numDevices == 0)	//no GPU available.
 	{
@@ -104,15 +108,18 @@ cl_int OpenCLMgr::init()
 		cout << "Choose CPU as default device." << endl;
 		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 0, NULL, &numDevices);
 		CHECK_SUCCESS("Error: Getting number of cpu devices")
+        check_error(status);
 		devices = (cl_device_id*)malloc(numDevices * sizeof(cl_device_id));
 		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, numDevices, devices, NULL);
 		CHECK_SUCCESS("Error: Getting cpu device id")
+        check_error(status);
 	}
 	else
 	{
 		devices = (cl_device_id*)malloc(numDevices * sizeof(cl_device_id));
 		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
 		CHECK_SUCCESS("Error: Getting gpu device id")
+        check_error(status);
 	}
 	
 	if (deviceNo>=numDevices)
@@ -134,7 +141,7 @@ cl_int OpenCLMgr::init()
 
 	size_t devMaxWorkGroupSize = 0;
 	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(devMaxWorkGroupSize), &(devMaxWorkGroupSize), NULL);
-	cout << "CL_DEVICE_MAX_COMPUTE_UNITS: " << devMaxWorkGroupSize << endl;
+	cout << "CL_DEVICE_MAX_WORK_GROUP_SIZE: " << devMaxWorkGroupSize << endl;
 
 	cl_uint devMaxWorkItemDims = 0;
 	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(devMaxWorkItemDims), &(devMaxWorkItemDims), NULL);
@@ -167,7 +174,10 @@ cl_int OpenCLMgr::init()
     cout << platforminfo << endl;
 	
 	// Creating command queue associate with the context
-	commandQueue = clCreateCommandQueue(context, devices[deviceNo], CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &status);
+    // old
+//	commandQueue = clCreateCommandQueue(context, devices[deviceNo], CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &status);
+	commandQueue = clCreateCommandQueue(context, devices[deviceNo], CL_QUEUE_PROFILING_ENABLE, &status);
+//    clCreateCommandQueueWithProperties(context, devices[deviceNo], )
 	CHECK_SUCCESS("Error: creating command queue")
 
 	// Create program object 

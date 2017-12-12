@@ -3,6 +3,8 @@
 #include <string.h>
 #include <cmath>
 
+#include "clstatushelper.h"
+
 using namespace std;
 
 #include "Matrix.h"
@@ -161,10 +163,12 @@ Matrix Matrix::operator+(const Matrix& m)
 			cl_mem Buffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, width*height*sizeof(cl_float), NULL, NULL);
 			status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, Buffer, CL_TRUE, 0, width*height*sizeof(cl_float), data, 0, NULL, NULL);
 			//CHECK_SUCCESS("Error: writing buffer!")
+			check_error(status);
 
 			cl_mem BBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, m.width*m.height*sizeof(cl_float), NULL, NULL);
 			status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, BBuffer, CL_TRUE, 0, m.width*m.height*sizeof(cl_float), m.data, 0, NULL, NULL);
 			//CHECK_SUCCESS("Error: writing buffer!")
+			check_error(status);
 
 			cl_mem CBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_WRITE_ONLY , result.width*result.height*sizeof(cl_float), NULL, NULL);
 
@@ -179,6 +183,8 @@ Matrix Matrix::operator+(const Matrix& m)
 			status |= clSetKernelArg(OpenCLmgr->matadd_kernel, 7, sizeof(cl_int), (void *)&result.height);
 			status |= clSetKernelArg(OpenCLmgr->matadd_kernel, 8, sizeof(cl_mem), (void *)&CBuffer);
 			//CHECK_SUCCESS("Error: setting kernel argument!")
+			check_error(status);
+
 
 			// Run the kernel.
 			size_t global_work_size[2] = {result.width, result.height};
@@ -186,16 +192,19 @@ Matrix Matrix::operator+(const Matrix& m)
 
 			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matadd_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
 			//CHECK_SUCCESS("Error: enqueuing kernel!")
-
+			
+            check_error(status);
 			// Read the output back to host memory.
 			status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, CBuffer, CL_TRUE, 0, result.width*result.height*sizeof(cl_float), result.data, 0, NULL, NULL);
 			//CHECK_SUCCESS("Error: reading buffer!")
-
+			check_error(status);
 			// release buffers
 			status = clReleaseMemObject(Buffer);
+			check_error(status);
 			status = clReleaseMemObject(BBuffer);
+			check_error(status);
 			status = clReleaseMemObject(CBuffer);
-
+			check_error(status);
 			return result;
 		}
 	}
@@ -246,10 +255,12 @@ Matrix Matrix::operator*(const Matrix& m)
 			cl_mem Buffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, width*height*sizeof(cl_float), NULL, NULL);
 			status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, Buffer, CL_TRUE, 0, width*height*sizeof(cl_float), data, 0, NULL, NULL);
 			//CHECK_SUCCESS("Error: writing buffer!")
+			check_error(status);
 
 			cl_mem BBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, m.width*m.height*sizeof(cl_float), NULL, NULL);
 			status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, BBuffer, CL_TRUE, 0, m.width*m.height*sizeof(cl_float), m.data, 0, NULL, NULL);
 			//CHECK_SUCCESS("Error: writing buffer!")
+			check_error(status);
 
 			cl_mem CBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_WRITE_ONLY , result.width*result.height*sizeof(cl_float), NULL, NULL);
 
@@ -267,7 +278,7 @@ Matrix Matrix::operator*(const Matrix& m)
 			status |= clSetKernelArg(OpenCLmgr->matmulshared_kernel, 8, sizeof(cl_mem), (void *)&CBuffer);
 			//CHECK_SUCCESS("Error: setting kernel argument!")
 //			printf("status %i\n", status);
-
+			check_error(status);
 
 //			printf("Result.Wi")
 			size_t gws_0 = ((result.width-1)/16+1)*16;
@@ -280,18 +291,24 @@ Matrix Matrix::operator*(const Matrix& m)
 			printf("Local Work Size:  [%i,%i]\n", local_work_size[0], local_work_size[1]);
 
 			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmulshared_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
+			check_error(status);
 			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmulshared_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
+			check_error(status);
 //			printf("status %i\n", status);
             // CHECK_SUCCESS("Error: enqueuing kernel!")
 
 			// Read the output back to host memory.
 			status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, CBuffer, CL_TRUE, 0, result.width*result.height*sizeof(cl_float), result.data, 0, NULL, NULL);
 			//CHECK_SUCCESS("Error: reading buffer!")
-
+			check_error(status);
 			// release buffers
 			status = clReleaseMemObject(Buffer);
+			check_error(status);
 			status = clReleaseMemObject(BBuffer);
+			check_error(status);
 			status = clReleaseMemObject(CBuffer);
+			check_error(status);
+			
 			timingEnd();
 			return result;
         }
@@ -309,10 +326,12 @@ Matrix Matrix::operator*(const Matrix& m)
             cl_mem Buffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, width*height*sizeof(cl_float), NULL, NULL);
             status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, Buffer, CL_TRUE, 0, width*height*sizeof(cl_float), data, 0, NULL, NULL);
             //CHECK_SUCCESS("Error: writing buffer!")
+            check_error(status);
 
             cl_mem BBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, m.width*m.height*sizeof(cl_float), NULL, NULL);
             status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, BBuffer, CL_TRUE, 0, m.width*m.height*sizeof(cl_float), m.data, 0, NULL, NULL);
             //CHECK_SUCCESS("Error: writing buffer!")
+            check_error(status);
 
             cl_mem CBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_WRITE_ONLY , result.width*result.height*sizeof(cl_float), NULL, NULL);
 
@@ -329,23 +348,30 @@ Matrix Matrix::operator*(const Matrix& m)
             status |= clSetKernelArg(OpenCLmgr->matmul_kernel, 7, sizeof(cl_int), (void *)&result.height);
             status |= clSetKernelArg(OpenCLmgr->matmul_kernel, 8, sizeof(cl_mem), (void *)&CBuffer);
 //            CHECK_SUCCESS("Error: setting kernel argument!")
-
+            check_error(status);
 
 //			// Default Code
 			size_t global_work_size[2] = {result.width, result.height};
 			size_t local_work_size[2] = {result.width, result.height};
 
-            status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmul_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
+            status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmul_kernel, 2, NULL, global_work_size, NULL, 0, NULL, NULL);
             // CHECK_SUCCESS("Error: enqueuing kernel!")
+            check_error(status);
 
             // Read the output back to host memory.
+
+            status = clFinish(OpenCLmgr->commandQueue);
+            check_error(status);
+
             status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, CBuffer, CL_TRUE, 0, result.width*result.height*sizeof(cl_float), result.data, 0, NULL, NULL);
             //CHECK_SUCCESS("Error: reading buffer!")
+            check_error(status);
 
             // release buffers
             status = clReleaseMemObject(Buffer);
             status = clReleaseMemObject(BBuffer);
             status = clReleaseMemObject(CBuffer);
+            check_error(status);
 			timingEnd();
             return result;
         } else {

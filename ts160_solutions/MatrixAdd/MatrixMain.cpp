@@ -87,21 +87,21 @@ int main(int argc, char* argv[])
 //    B.plot();
 //    C.plot();
 
-       int size = 500;
+       int size = 3500;
 //    int size = 1000;
 //    int size = 1440;
 
-    for(int i=0; i<1; i++){
+    for(int i=0; i<2; i++){
 
-//        size = size+100;
+        size = size+500;
 
 //         float dat[size*size] = {0};
 
-//        Matrix F(size,size, MATRIX_NEW_RANDOM);
-//        Matrix G(size,size, MATRIX_NEW_RANDOM);
+        Matrix F(size,size, MATRIX_NEW_RANDOM);
+        Matrix G(size,size, MATRIX_NEW_RANDOM);
 
-        Matrix F(size,size, MATRIX_NEW_ONES);
-        Matrix G(size,size, MATRIX_NEW_IDENTITY);
+//        Matrix F(size,size, MATRIX_NEW_ONES);
+//        Matrix G(size,size, MATRIX_NEW_IDENTITY);
 //
 
         Matrix M_GPU, M_GPU_SHARED, M_CPU;
@@ -124,12 +124,12 @@ int main(int argc, char* argv[])
 
         cout << endl;
 
-        if(size<20){
+        if(size<100){
             F.plot("F");
             G.plot("G");
 
             M_CPU.plot("CPU");
-            M_GPU.plot("GPU");
+//            M_GPU.plot("GPU");
             M_GPU_SHARED.plot("GPU_SHARED");
         }
 
