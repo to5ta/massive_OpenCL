@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CidrRootsConfiguration">
+    <sourceRoots>
+      <file path="$PROJECT_DIR$/cmake" />
+    </sourceRoots>
+    <libraryRoots>
+      <file path="$PROJECT_DIR$/SDL.framework" />
+    </libraryRoots>
+    <excludeRoots>
+      <file path="$PROJECT_DIR$/ImageFX.xcodeproj" />
+      <file path="$PROJECT_DIR$/SDL2.framework" />
+      <file path="$PROJECT_DIR$/_" />
+    </excludeRoots>
+  </component>
+</project>
