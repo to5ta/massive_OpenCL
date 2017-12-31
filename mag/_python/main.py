@@ -55,8 +55,10 @@ def showHist(vals):
 #Read in image
 img = Image.open('rainbow.png')
 npImg = np.asarray(img)
-print npImg.shape
 # test(npImg)
 # # vals = histogramPy.calcHistogram(npImg)
 vals = histogramOCL.calcHistogram(npImg)
-# showHist(vals)
+try:
+    showHist(vals)
+except:
+    print 'cant show histogram'
