@@ -1,25 +1,44 @@
-
 __kernel void calcStatistic(__global uchar3 *img, __global int *result)
 {
     const int lx = get_local_id(0);
-    const int gx = get_global_id(0);
+    // const int gx = get_global_id(0);
+    const int wx = get_group_id(0);
 
-    __local int counts[32][256];
+    __local int counts[32][256];    // shared by 32 workitems, for 256 pixels each
 
+
+    const int WORK_SIZE = 8192;
     float value;
-    if(gx == 0)
+    int idx;
+
+    for(int i = 0; i < 8; i++)
     {
-        for(int idx = 0; idx < 256; idx++)
+        for(int k = 0; k < 32; k++)
         {
-            value = (0.2126f * img[gx * 256 + lx].x +
-                     0.7152f * img[gx * 256 + lx].y +
-                     0.0722f * img[gx * 256 + lx].z);
+            idx = (wx * WORK_SIZE) + (i * 1024) + (k * 32) + lx;
+
+            value = (0.2126f * img[idx].x +
+                     0.7152f * img[idx].y +
+                     0.0722f * img[idx].z);
 
             counts[lx][(int)value] += 1;
         }
     }
+
+//    printf("waiting for sync");
     barrier(CLK_LOCAL_MEM_FENCE);
 
+    int value_sum = 0;
+    for(int i = 0; i < 8; i++)
+    {
+        for(int k = 0; k < 32; k++)
+        {
+            value_sum += counts[k][i * 32 + lx];
+        }
+    }
 
-
+    for(int i = 0; i < 8; i++)
+    {
+        result[wx * 256 + i * 32 + lx ] = value_sum;
+    }
 }

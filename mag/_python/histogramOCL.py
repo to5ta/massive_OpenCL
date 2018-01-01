@@ -18,23 +18,27 @@ def calcHistogram(inputImg):
     print "global_work_size:", global_work_size
     print "NUM_GLOBAL_ITEMS:", NUM_GLOBAL_ITEMS
 
+
     local_work_size = WORKGROUP_SIZE
 
-
     # Get platforms, both CPU and GPU
-    plat = cl.get_platforms()
-    CPU = plat[0].get_devices()
-    try:
-        GPU = plat[1].get_devices()
-    except IndexError:
-        GPU = "none"
+    plat = cl.get_platforms()[0]
 
-    GPU = "none"
+    CPU = plat.get_devices(device_type=cl.device_type.CPU)[0]
+    try:
+        GPU = plat.get_devices(device_type=cl.device_type.GPU)[0]
+    except IndexError:
+        GPU = 'none'
+
+    # GPU = 'none'
     #Create context for GPU/CPU
-    if GPU!= "none":
-        ctx = cl.Context(GPU)
-    else:
-        ctx = cl.Context(CPU)
+    try:
+        if GPU._id == "device":
+            ctx = cl.Context([GPU])
+            print 'Created GPU Context'
+    except:
+        ctx = cl.Context([CPU])
+        print 'Created CPU Context'
 
     # Create queue for each kernel execution
     queue = cl.CommandQueue(ctx)
@@ -45,15 +49,20 @@ def calcHistogram(inputImg):
     with open('histogramKernel.cl', 'r') as kernel:
         src = kernel.read()
 
+
     #Kernel function instantiation
-    prg = cl.Program(ctx, src).build()
+    prg = cl.Program(ctx, src)
+    prg = prg.build()
 
     # Flatten image so it can be read in kernel as float4
     img = inputImg.reshape(NUM_PIXELS*3)
+    # print img.dtype.itemsize
+
 
     #Allocate memory for variables on the device
     img_g =  cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img)
-    result_g = cl.Buffer(ctx, mf.WRITE_ONLY, (nr_workgroups * 256 * np.dtype(np.uint32).itemsize))
+    result_g = cl.Buffer(ctx, mf.WRITE_ONLY, (nr_workgroups * 256 * np.dtype(np.int32).itemsize))
+
 
     # Create Kernel.
     kernel = prg.calcStatistic
@@ -62,7 +71,11 @@ def calcHistogram(inputImg):
     kernel.set_arg(1, result_g)
 
     # Array to copy result into
-    result = np.zeros([nr_workgroups * 256], dtype=np.uint32)
+    result = np.zeros([nr_workgroups * 256], dtype=np.int32)
+
+
+    print "global_work_size:", global_work_size
+    print "local_work_size:", local_work_size
 
 
     cl.enqueue_nd_range_kernel(queue, kernel, [global_work_size], [local_work_size], global_work_offset=None,

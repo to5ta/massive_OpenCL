@@ -5,6 +5,7 @@ from PIL import Image
 
 import histogramPy
 import histogramOCL
+import pyopencl_tests
 import pyopencl.array as cl_array
 
 
@@ -55,6 +56,9 @@ def showHist(vals):
 #Read in image
 img = Image.open('rainbow.png')
 npImg = np.asarray(img)
+
+pyopencl_tests.showDevices()
+
 # test(npImg)
 # # vals = histogramPy.calcHistogram(npImg)
 vals = histogramOCL.calcHistogram(npImg)
