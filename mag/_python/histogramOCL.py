@@ -56,8 +56,11 @@ def calcHistogram(inputImg):
     prg = cl.Program(ctx, srcCalc)
     prg = prg.build()
 
+    width = inputImg.shape[0]
+    height = inputImg.shape[1]
+
     # Flatten image so it can be read in kernel as uchar4
-    img = np.ones((256, 512, 3 + 1), dtype=np.uint8)
+    img = np.ones((width, height, 4), dtype=np.uint8)
     img[:, :,  :-1] = inputImg
     img = img.reshape(NUM_PIXELS * 4)
 
@@ -68,10 +71,8 @@ def calcHistogram(inputImg):
 
 
     # Array to copy result into
-    result = np.zeros([nr_workgroups * 256], dtype=np.int32)
+    result = np.zeros([256], dtype=np.int32)
 
-    print "global_work_size:", global_work_size
-    print "local_work_size:", local_work_size
 
     gpu_start_time = time()  # Get the GPU start time
 
@@ -87,15 +88,15 @@ def calcHistogram(inputImg):
     print("GPU Time: {0} s".format(gpu_end_time - gpu_start_time))  # Print the time the GPU program took, including both memory copies
 
 ##########################################################################################
-##########################################################################################
+    print '##########################################################################################'
 
     with open('reduceStatistic.cl', 'r') as kernelReduce:
         srcReduce = kernelReduce.read()
 
 
     # Kernel function instantiation
-    prg2 = cl.Program(ctx, srcReduce)
-    prg2 = prg2.build()
+    prg = cl.Program(ctx, srcReduce)
+    prg = prg.build()
 
     gpu_start_time = time()  # Get the GPU start time
 
@@ -103,7 +104,7 @@ def calcHistogram(inputImg):
     nWG[0] = nr_workgroups
     nWG_g = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=nWG)
 
-    event = prg2.reduceStatistic(queue, [256], [256], result_g, nWG_g)  # Enqueue the GPU sum program
+    event = prg.reduceStatistic(queue, [256], [256], result_g, nWG_g)  # Enqueue the GPU sum program
 
     event.wait()  # Wait until the event finishes
     elapsed = 1e-9 * (event.profile.end - event.profile.start)  # Calculate the time it took to execute the kernel
@@ -114,15 +115,4 @@ def calcHistogram(inputImg):
     gpu_end_time = time()  # Get the GPU end time
     print("GPU Time: {0} s".format(gpu_end_time - gpu_start_time))  # Print the time the GPU program took, including both memory copies
 
-    # # Create Kernel.
-    # kernel = prg.calcStatistic
-    # kernel.set_arg(0, img_g)
-    # kernel.set_arg(1, result_g)
-
-    # cl.enqueue_nd_range_kernel(queue, kernel, [global_work_size], [local_work_size], global_work_offset=None,
-    #                                  wait_for=None, g_times_l=False)
-    # cl.enqueue_copy(queue, result, result_g)
-
-
-    result = result[:256]
     return result
