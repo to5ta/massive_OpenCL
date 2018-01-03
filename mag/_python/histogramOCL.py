@@ -50,17 +50,21 @@ def calcHistogram(inputImg):
         src = kernel.read()
 
 
-    #Kernel function instantiation
+    # Kernel function instantiation
     prg = cl.Program(ctx, src)
     prg = prg.build()
 
-    # Flatten image so it can be read in kernel as float4
-    img = inputImg.reshape(NUM_PIXELS*3)
-    # print img.dtype.itemsize
+    # Flatten image so it can be read in kernel as uchar4
+    img = np.ones((256, 512, 3 + 1), dtype=np.uint8)
+    img[:, :,  :-1] = inputImg
 
 
-    #Allocate memory for variables on the device
-    img_g =  cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img)
+    img = img.reshape(NUM_PIXELS * 4)
+
+
+    # Allocate memory for variables on the device
+    # img_g =  cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img)
+    img_g = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img)
     result_g = cl.Buffer(ctx, mf.WRITE_ONLY, (nr_workgroups * 256 * np.dtype(np.int32).itemsize))
 
 
@@ -82,5 +86,5 @@ def calcHistogram(inputImg):
                                      wait_for=None, g_times_l=False)
     cl.enqueue_copy(queue, result, result_g)
 
-    result = result[:256]
+    # result = result[:1024]
     return result

@@ -6,6 +6,7 @@ from PIL import Image
 import histogramPy
 import histogramOCL
 import pyopencl_tests
+import testKernel
 import pyopencl.array as cl_array
 
 
@@ -31,24 +32,34 @@ def test(img):
     print testArray
 
 
-
-
-
-
 def showHist(vals):
-    max = vals.max()
+    if len(vals) > 256:
+        for i in xrange(256):
+            reducedValue = 0
+            for k in xrange(len(vals)/256):
+                reducedValue += vals[k * 256 + i]
+            vals[i] = reducedValue
 
-    hist = np.ones((128, 256), dtype=np.int8)
+    vals = vals[:256]
+
+    max = vals.max()
+    norm = 127.0 / max
+
+    hist = np.ones((128, 256), dtype=np.uint8)
     hist = hist * 255
 
     for x in xrange(256):
-        val = int(127.0 / max * vals[x])
+        val = int(norm * vals[x])
 
-        hist[(128 - val):127, x] = 0
+        hist[(127 - val):127, x] = 0
 
     # Show the blurred image
     imgOut = Image.fromarray(hist)
     print imgOut.show()
+
+
+def testArray(array, i):
+    return len([elem for elem in array if elem != 3])
 
 
 
@@ -62,6 +73,8 @@ pyopencl_tests.showDevices()
 # test(npImg)
 # # vals = histogramPy.calcHistogram(npImg)
 vals = histogramOCL.calcHistogram(npImg)
+# vals = testKernel.test()
+# print "\nwrong values:\n", testArray(vals, 0)
 try:
     showHist(vals)
 except:
