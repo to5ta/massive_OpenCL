@@ -9,11 +9,7 @@ import pyopencl_tests
 import testKernel
 import pyopencl.array as cl_array
 
-
-
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
-
-
 
 
 def test(img):
