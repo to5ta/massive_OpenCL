@@ -57,7 +57,7 @@ def calcHistogram(inputImg):
     prg = prg.build()
 
     # Flatten image so it can be read in kernel as uchar4
-    img = np.ones((256, 512, 3 + 1), dtype=np.uint8)
+    img = np.ones((width, height, 4), dtype=np.uint8)
     img[:, :,  :-1] = inputImg
     img = img.reshape(NUM_PIXELS * 4)
 
@@ -68,10 +68,8 @@ def calcHistogram(inputImg):
 
 
     # Array to copy result into
-    result = np.zeros([nr_workgroups * 256], dtype=np.int32)
+    result = np.zeros([256], dtype=np.int32)
 
-    print "global_work_size:", global_work_size
-    print "local_work_size:", local_work_size
 
     gpu_start_time = time()  # Get the GPU start time
 
@@ -87,7 +85,7 @@ def calcHistogram(inputImg):
     print("GPU Time: {0} s".format(gpu_end_time - gpu_start_time))  # Print the time the GPU program took, including both memory copies
 
 ##########################################################################################
-##########################################################################################
+    print '##########################################################################################'
 
 
     gpu_start_time = time()  # Get the GPU start time
@@ -107,15 +105,4 @@ def calcHistogram(inputImg):
     gpu_end_time = time()  # Get the GPU end time
     print("GPU Time: {0} s".format(gpu_end_time - gpu_start_time))  # Print the time the GPU program took, including both memory copies
 
-    # # Create Kernel.
-    # kernel = prg.calcStatistic
-    # kernel.set_arg(0, img_g)
-    # kernel.set_arg(1, result_g)
-
-    # cl.enqueue_nd_range_kernel(queue, kernel, [global_work_size], [local_work_size], global_work_offset=None,
-    #                                  wait_for=None, g_times_l=False)
-    # cl.enqueue_copy(queue, result, result_g)
-
-
-    result = result[:256]
     return result

@@ -6,26 +6,10 @@ from PIL import Image
 import histogramPy
 import histogramOCL
 import pyopencl_tests
-import testKernel
+# import testKernel
 import pyopencl.array as cl_array
 
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
-
-
-def test(img):
-
-    # testArray = np.array(([1, 2, 3], [1, 2, 3]))
-    testArray = np.array( ([[0, 0, 0], [1, 1, 1], [2,2,2], [3,3,3]],
-                           [[4, 4, 4], [5, 5, 5], [6, 6, 6], [7, 7, 7]]) )
-    print testArray.shape
-
-    # testArray = testArray.transpose(2, 0, 1)
-    testArray = testArray.reshape(-1, testArray.shape[1])
-
-    # img = img.reshape(-1, testArray.shape[1])
-
-    print testArray.shape
-    print testArray
 
 
 def showHist(vals):
@@ -54,23 +38,14 @@ def showHist(vals):
     print imgOut.show()
 
 
-def testArray(array, i):
-    return len([elem for elem in array if elem != 3])
-
-
-
-
 #Read in image
-img = Image.open('rainbow.png')
+img = Image.open('Magnus_1k.png')
 npImg = np.asarray(img)
 
-pyopencl_tests.showDevices()
+# pyopencl_tests.showDevices()
 
-# test(npImg)
-# # vals = histogramPy.calcHistogram(npImg)
+# vals = histogramPy.calcHistogram(npImg)
 vals = histogramOCL.calcHistogram(npImg)
-# vals = testKernel.test()
-# print "\nwrong values:\n", testArray(vals, 0)
 try:
     showHist(vals)
 except:
