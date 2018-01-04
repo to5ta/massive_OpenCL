@@ -37,7 +37,7 @@ __kernel void calcStatistic(__global const uchar4 *img, __global int *result)
 
         result[wx * 256 + i * 32 + lx ] = value_sum;
     }
-    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+//    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
 }
 
 
@@ -46,14 +46,12 @@ __kernel void reduceStatistic(__global int *result, __global char *nWG)
     const int lx = get_local_id(0);
 
     int numWorkGroups = nWG[0];
-    printf("nWG: %d", numWorkGroups);
-
 
     int reducedValue = 0;
     for(int k=0; k < numWorkGroups; k++)
     {
         reducedValue += result[k * 256 + lx];
     }
-    result[lx] = reducedValue;
 
+    result[lx] = reducedValue;
 }

@@ -39,7 +39,7 @@ def showHist(vals):
 
 
 #Read in image
-img = Image.open('Magnus_1k.png')
+img = Image.open('magnus_1k.png')
 npImg = np.asarray(img)
 
 # pyopencl_tests.showDevices()

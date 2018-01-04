@@ -57,7 +57,9 @@ def calcHistogram(inputImg):
     prg = prg.build()
 
     # Flatten image so it can be read in kernel as uchar4
-    img = np.ones((width, height, 4), dtype=np.uint8)
+    height = inputImg.shape[0]
+    width = inputImg.shape[1]
+    img = np.ones((height, width, 4), dtype=np.uint8)
     img[:, :,  :-1] = inputImg
     img = img.reshape(NUM_PIXELS * 4)
 
@@ -79,7 +81,7 @@ def calcHistogram(inputImg):
     elapsed = 1e-9 * (event.profile.end - event.profile.start)  # Calculate the time it took to execute the kernel
     print("GPU Kernel Time: {0} s".format(elapsed))  # Print the time it took to execute the kernel
 
-    # cl.enqueue_copy(queue, result, result_g).wait() # Read back the data from GPU memory into array c_gpu
+    cl.enqueue_copy(queue, result, result_g).wait() # Read back the data from GPU memory into array c_gpu
 
     gpu_end_time = time()  # Get the GPU end time
     print("GPU Time: {0} s".format(gpu_end_time - gpu_start_time))  # Print the time the GPU program took, including both memory copies
@@ -94,13 +96,13 @@ def calcHistogram(inputImg):
     nWG[0] = nr_workgroups
     nWG_g = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=nWG)
 
-    event = prg.reduceStatistic(queue, [256], [256], result_g, nWG_g)  # Enqueue the GPU sum program
+    event = prg.reduceStatistic(queue, [256], [256], result_g, nWG_g)  # Enqueue the GPU reduce program
 
     event.wait()  # Wait until the event finishes
     elapsed = 1e-9 * (event.profile.end - event.profile.start)  # Calculate the time it took to execute the kernel
     print("GPU Kernel Time: {0} s".format(elapsed))  # Print the time it took to execute the kernel
 
-    cl.enqueue_copy(queue, result, result_g).wait()  # Read back the data from GPU memory into array c_gpu
+    cl.enqueue_copy(queue, result, result_g).wait()  # Read back the data from GPU memory into array result
 
     gpu_end_time = time()  # Get the GPU end time
     print("GPU Time: {0} s".format(gpu_end_time - gpu_start_time))  # Print the time the GPU program took, including both memory copies
