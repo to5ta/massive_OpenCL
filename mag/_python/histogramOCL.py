@@ -48,12 +48,12 @@ def calcHistogram(inputImg):
     mf = cl.mem_flags
 
     # Kernel function
-    with open('calcStatistic.cl', 'r') as kernelCalc:
-        srcCalc = kernelCalc.read()
+    with open('histogramKernels.cl', 'r') as kernelCalc:
+        src = kernelCalc.read()
 
 
     # Kernel function instantiation
-    prg = cl.Program(ctx, srcCalc)
+    prg = cl.Program(ctx, src)
     prg = prg.build()
 
     # Flatten image so it can be read in kernel as uchar4
@@ -89,13 +89,6 @@ def calcHistogram(inputImg):
 ##########################################################################################
 ##########################################################################################
 
-    with open('reduceStatistic.cl', 'r') as kernelReduce:
-        srcReduce = kernelReduce.read()
-
-
-    # Kernel function instantiation
-    prg2 = cl.Program(ctx, srcReduce)
-    prg2 = prg2.build()
 
     gpu_start_time = time()  # Get the GPU start time
 
@@ -103,7 +96,7 @@ def calcHistogram(inputImg):
     nWG[0] = nr_workgroups
     nWG_g = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=nWG)
 
-    event = prg2.reduceStatistic(queue, [256], [256], result_g, nWG_g)  # Enqueue the GPU sum program
+    event = prg.reduceStatistic(queue, [256], [256], result_g, nWG_g)  # Enqueue the GPU sum program
 
     event.wait()  # Wait until the event finishes
     elapsed = 1e-9 * (event.profile.end - event.profile.start)  # Calculate the time it took to execute the kernel
