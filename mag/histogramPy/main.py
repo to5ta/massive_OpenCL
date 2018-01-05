@@ -1,5 +1,4 @@
 import os
-
 import numpy as np
 from PIL import Image
 
@@ -31,7 +30,7 @@ def showHist(vals):
     for x in xrange(256):
         val = int(norm * vals[x])
 
-        hist[(127 - val):127, x] = 0
+        hist[(128 - val):127, x] = 0
 
     # Show the blurred image
     imgOut = Image.fromarray(hist)
@@ -39,7 +38,7 @@ def showHist(vals):
 
 
 #Read in image
-img = Image.open('magnus_1k.png')
+img = Image.open('resources/rainbow.png')
 npImg = np.asarray(img)
 
 # pyopencl_tests.showDevices()
