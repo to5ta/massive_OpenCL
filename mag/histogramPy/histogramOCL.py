@@ -60,7 +60,7 @@ def calcHistogram(inputImg):
     height = inputImg.shape[0]
     width = inputImg.shape[1]
     img = np.ones((height, width, 4), dtype=np.uint8)
-    img[:, :, :] = inputImg
+    img[:, :, :(inputImg.shape[2])] = inputImg
     img = img.reshape(NUM_PIXELS * 4)
 
 
