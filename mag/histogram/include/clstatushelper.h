@@ -2,8 +2,8 @@
 // Created by tosta on 11.12.17.
 //
 
-#ifndef MATRIXADD_CLSTATUSHELPER_H
-#define MATRIXADD_CLSTATUSHELPER_H
+#ifndef OPENCL_CLSTATUSHELPER_H
+#define OPENCL_CLSTATUSHELPER_H
 
 #include <OpenCL/cl.h>
 #include <iostream>
@@ -35,7 +35,7 @@ inline const char* get_error_string(cl_int error)
         case -19:
             return "CL_KERNEL_ARG_INFO_NOT_AVAILABLE";
 
-            // compile-time errors
+        // compile-time errors
         case -30: return "CL_INVALID_VALUE";
         case -31: return "CL_INVALID_DEVICE_TYPE";
         case -32: return "CL_INVALID_PLATFORM";
@@ -77,7 +77,7 @@ inline const char* get_error_string(cl_int error)
         case -68:
             return "CL_INVALID_DEVICE_PARTITION_COUNT";
 
-            // extension errors
+        // extension errors
         case -1000: return "CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR";
         case -1001: return "CL_PLATFORM_NOT_FOUND_KHR";
         case -1002: return "CL_INVALID_D3D10_DEVICE_KHR";
@@ -98,6 +98,6 @@ inline void check_error(cl_int error)
     error = 0;
 }
 
-#endif //MATRIXADD_CLSTATUSHELPER_H
+#endif //OPENCL_CLSTATUSHELPER_H
 
 

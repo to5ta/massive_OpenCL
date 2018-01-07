@@ -94,6 +94,8 @@ cl_int OpenCLMgr::init()
     status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
     check_error(status);
     CHECK_SUCCESS("Error: Getting device ids")
+
+//    numDevices = 0; // ENABLE CPU EXECUTION
     if (numDevices == 0)    //no GPU available.
     {
         cout << "No GPU device available." << endl;
