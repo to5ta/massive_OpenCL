@@ -94,6 +94,8 @@ cl_int OpenCLMgr::init()
     status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
     check_error(status);
     CHECK_SUCCESS("Error: Getting device ids")
+
+//    numDevices = 0; // ENABLE CPU EXECUTION
     if (numDevices == 0)    //no GPU available.
     {
         cout << "No GPU device available." << endl;
@@ -166,7 +168,7 @@ cl_int OpenCLMgr::init()
     CHECK_SUCCESS("Error: creating command queue")
 
     // Create program object
-    const char *filename = "/Users/mag/MassiveOpenCL/mag/histogram/src/histogramKernels.cl";
+    const char *filename = "/Users/mag/parallelComputing/MassiveOpenCL/mag/histogram/src/histogramKernels.cl";
     string sourceStr;
     status = convertToString(filename, sourceStr);
     CHECK_SUCCESS("Error: loading OpenCL file")
