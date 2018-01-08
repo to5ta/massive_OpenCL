@@ -36,13 +36,13 @@ void render(int *histValues)
         }
     }
 
-    std::string outputImgFpn("/Users/mag/MassiveOpenCL/mag/histogram/histogram.png");
+    std::string outputImgFpn("/Users/mag/parallelComputing/MassiveOpenCL/mag/histogram/histogram.png");
     stbi_write_png(outputImgFpn.c_str(), width, height, 1, &hist, 256 * sizeof(int8_t));
 }
 
 double calc()
 {
-    std::string inputImgFpn("/Users/mag/MassiveOpenCL/mag/histogramPy/resources/rainbow4.png");
+    std::string inputImgFpn("/Users/mag/parallelComputing/MassiveOpenCL/mag/histogramPy/resources/rainbow.png");
     int width, height, channels;
     unsigned char *inputImg = stbi_load(inputImgFpn.c_str(), &width, &height, &channels, 0);
     unsigned char imgArray[width * height * 4];
@@ -56,7 +56,7 @@ double calc()
     int WORKGROUP_SIZE = 32;            // wieviele workitems pro workgroup
     int NUM_GLOBAL_ITEMS = NUM_PIXELS / WORKITEM_SIZE;
     int PIXELS_PER_WORKGROUP = WORKITEM_SIZE * WORKGROUP_SIZE;              //Pixels per WORKGROUP;
-    int GLOBAL_WORK_SIZE = (NUM_PIXELS + PIXELS_PER_WORKGROUP) / PIXELS_PER_WORKGROUP * WORKGROUP_SIZE;
+    int GLOBAL_WORK_SIZE = (NUM_PIXELS + (PIXELS_PER_WORKGROUP-1)) / PIXELS_PER_WORKGROUP * WORKGROUP_SIZE; 
 
     size_t global_work_size = GLOBAL_WORK_SIZE;
     size_t local_work_size = WORKGROUP_SIZE;
@@ -138,16 +138,16 @@ double calc()
                                     &eventCalc);
 
 
-//    // READ BUFFER
-//    status = clEnqueueReadBuffer(mgr.commandQueue,
-//                                 result_g,
-//                                 CL_TRUE,
-//                                 0,
-//                                 (256 * nr_workgroups * sizeof(cl_int)),
-//                                 &result,
-//                                 0,
-//                                 NULL,
-//                                 NULL);
+    // READ BUFFER
+    status = clEnqueueReadBuffer(mgr.commandQueue,
+                                 result_g,
+                                 CL_TRUE,
+                                 0,
+                                 (256 * nr_workgroups * sizeof(cl_int)),
+                                 &result,
+                                 0,
+                                 NULL,
+                                 NULL);
 
 
     check_error(status);
@@ -180,17 +180,17 @@ double calc()
     global_work_size = 256;
     local_work_size = 256;
 
-//    // WRITE BUFFER
-//    status = clEnqueueWriteBuffer(mgr.commandQueue,
-//                                  result_g,
-//                                  CL_TRUE,
-//                                  0,
-//                                  nr_workgroups * 256 * sizeof(cl_int),
-//                                  result,
-//                                  0,
-//                                  NULL,
-//                                  NULL);
-//    check_error(status);
+    // WRITE BUFFER
+    status = clEnqueueWriteBuffer(mgr.commandQueue,
+                                  result_g,
+                                  CL_TRUE,
+                                  0,
+                                  nr_workgroups * 256 * sizeof(cl_int),
+                                  result,
+                                  0,
+                                  NULL,
+                                  NULL);
+    check_error(status);
 
     // ENQUEUE KERNELS
     status = clEnqueueNDRangeKernel(mgr.commandQueue,
@@ -249,7 +249,7 @@ double calc()
 
 int main()
 {
-    const int ITERATIONS = 1;
+    const int ITERATIONS = 10;
     double sum = 0;
     for (int i = 0; i < ITERATIONS; i++) {
         sum += calc();

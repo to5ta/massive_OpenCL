@@ -168,7 +168,7 @@ cl_int OpenCLMgr::init()
     CHECK_SUCCESS("Error: creating command queue")
 
     // Create program object
-    const char *filename = "/Users/mag/MassiveOpenCL/mag/histogram/src/histogramKernels.cl";
+    const char *filename = "/Users/mag/parallelComputing/MassiveOpenCL/mag/histogram/src/histogramKernels.cl";
     string sourceStr;
     status = convertToString(filename, sourceStr);
     CHECK_SUCCESS("Error: loading OpenCL file")

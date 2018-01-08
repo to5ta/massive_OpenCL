@@ -69,5 +69,5 @@ __kernel void reduceStatistic(__global int *result, int nWG)
     }
     barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
     result[lx] = reducedValue;
-    printf("reducedValue: %d\n", reducedValue);
+    // printf("reducedValue: %d\n", reducedValue);
 }
