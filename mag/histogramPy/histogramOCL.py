@@ -60,13 +60,13 @@ def calcHistogram(inputImg):
     height = inputImg.shape[0]
     width = inputImg.shape[1]
     img = np.ones((height, width, 4), dtype=np.uint8)
-    img[:, :,  :-1] = inputImg
+    img[:, :, :(inputImg.shape[2])] = inputImg
     img = img.reshape(NUM_PIXELS * 4)
 
 
     # Allocate memory for variables on the device
     img_g = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=img)
-    result_g = cl.Buffer(ctx, mf.WRITE_ONLY, (nr_workgroups * 256 * np.dtype(np.int32).itemsize))
+    result_g = cl.Buffer(ctx, mf.READ_WRITE, (nr_workgroups * 256 * np.dtype(np.int32).itemsize))
 
 
     # Array to copy result into
@@ -85,9 +85,6 @@ def calcHistogram(inputImg):
 
     gpu_end_time = time()  # Get the GPU end time
     print("GPU Time: {0} s".format(gpu_end_time - gpu_start_time))  # Print the time the GPU program took, including both memory copies
-
-##########################################################################################
-    print '##########################################################################################'
 
 
     gpu_start_time = time()  # Get the GPU start time
