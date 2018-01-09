@@ -86,9 +86,11 @@ cl_int OpenCLMgr::createContext(){
 	deviceNo = 1;
 
 	// Getting platforms and choose an available one.
-	cl_uint numPlatforms;    //the NO. of platforms
-	cl_platform_id platform = NULL;    //the chosen platform
-	cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
+    //the NO. of platforms
+    cl_uint         numPlatforms    = 0;
+    //the chosen platform
+    cl_platform_id  platform        = NULL;
+	cl_int          status          = clGetPlatformIDs(0, NULL, &numPlatforms);
 	check_error(status);
 	CHECK_SUCCESS("Error: Getting platforms!")
 
@@ -130,40 +132,40 @@ cl_int OpenCLMgr::createContext(){
 	if (deviceNo >= numDevices)
 		deviceNo = 0;
 
+
+    // only information
 	char devname[100] = {0};
 	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_NAME, 100, devname, NULL);
 	cout << "Using Device: " << devname << endl;
 
-	cl_ulong maxMem;
-	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_MEM_ALLOC_SIZE, 100, &(maxMem), NULL);
-	cout << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << maxMem << " bytes" << endl;
-	cout << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << maxMem / 1048576.f << " MB" << endl;
-
-
-	cl_uint devMaxComputeUnits = 0;
-	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(devMaxComputeUnits), &(devMaxComputeUnits),
-					NULL);
-	cout << "CL_DEVICE_MAX_COMPUTE_UNITS: " << devMaxComputeUnits << endl;
-
-	size_t devMaxWorkGroupSize = 0;
-	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(devMaxWorkGroupSize),
-					&(devMaxWorkGroupSize), NULL);
-	cout << "CL_DEVICE_MAX_WORK_GROUP_SIZE: " << devMaxWorkGroupSize << endl;
-
-	cl_uint devMaxWorkItemDims = 0;
-	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(devMaxWorkItemDims),
-					&(devMaxWorkItemDims), NULL);
-	cout << "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS: " << devMaxWorkItemDims << endl;
-
-
+//	cl_ulong maxMem;
+//	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_MEM_ALLOC_SIZE, 100, &(maxMem), NULL);
+//	cout << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << maxMem << " bytes" << endl;
+//	cout << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << maxMem / 1048576.f << " MB" << endl;
+//
+//
+//	cl_uint devMaxComputeUnits = 0;
+//	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(devMaxComputeUnits), &(devMaxComputeUnits),
+//					NULL);
+//	cout << "CL_DEVICE_MAX_COMPUTE_UNITS: " << devMaxComputeUnits << endl;
+//
+//	size_t devMaxWorkGroupSize = 0;
+//	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(devMaxWorkGroupSize),
+//					&(devMaxWorkGroupSize), NULL);
+//	cout << "CL_DEVICE_MAX_WORK_GROUP_SIZE: " << devMaxWorkGroupSize << endl;
+//
+//	cl_uint devMaxWorkItemDims = 0;
+//	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(devMaxWorkItemDims),
+//					&(devMaxWorkItemDims), NULL);
+//	cout << "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS: " << devMaxWorkItemDims << endl;
 //	cl_uint devMaxWorkItemDims = 0;
 //	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(devMaxWorkItemDims), &(devMaxWorkItemDims), NULL);
 //	cout << "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS: " << devMaxWorkItemDims << endl;
-
-	size_t maxPerDims[3] = {0};
-	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * 3, &(maxPerDims), NULL);
-	cout << "CL_DEVICE_MAX_WORK_ITEM_SIZES: " << maxPerDims[0] << ", " << maxPerDims[1] << ", " << maxPerDims[2]
-		 << endl;
+//
+//	size_t maxPerDims[3] = {0};
+//	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * 3, &(maxPerDims), NULL);
+//	cout << "CL_DEVICE_MAX_WORK_ITEM_SIZES: " << maxPerDims[0] << ", " << maxPerDims[1] << ", " << maxPerDims[2]
+//		 << endl;
 //
 //	CL_DEVICE_MAX_WORK_ITEM_SIZES
 //	CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS
@@ -171,13 +173,14 @@ cl_int OpenCLMgr::createContext(){
 //	CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS
 //  .....
 
+
 	// Create context
 	context = clCreateContext(NULL, 1, devices + deviceNo, NULL, NULL, NULL);
 	CHECK_SUCCESS("Error: creating OpenCL context")
 
-	char platforminfo[100] = {0};
-	clGetPlatformInfo(platform, CL_PLATFORM_VERSION, 100, platforminfo, NULL);
-	cout << platforminfo << endl;
+//	char platforminfo[100] = {0};
+//	clGetPlatformInfo(platform, CL_PLATFORM_VERSION, 100, platforminfo, NULL);
+//	cout << "PlatformInfo: "<< platforminfo << endl;
 
 	// Creating command queue associate with the context
 //	commandQueue = clCreateCommandQueue(context, devices[deviceNo], CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &status);
@@ -203,6 +206,7 @@ cl_int OpenCLMgr::buildProgram(const char* filepath) {
 
 	const char *source = sourceStr.c_str();
 	size_t sourceSize[] = {strlen(source)};
+
 	program = clCreateProgramWithSource(context, 1, &source, sourceSize, &status);
 	CHECK_SUCCESS("Error: creating OpenCL program")
 
@@ -226,7 +230,7 @@ cl_int OpenCLMgr::createKernels(const char ** kernel_names, cl_uint count) {
     for(cl_int i=0; i<count; i++){
 	// Create kernel objects
         kernels[kernel_names[i]] = clCreateKernel(program, kernel_names[i], &status);
-        CHECK_SUCCESS("Error: creating MatAddKernel kernel")
+        CHECK_SUCCESS("Error: creating '"<< kernel_names[i]<<"' kernel")
         check_error(status);
     }
 

@@ -5,6 +5,7 @@ __kernel void bitonic_kernel(__global int* in, __global int* out)
 	int lid     = get_local_id(0);
 	int groupid = get_group_id(0);
 
+    printf("gid: %i\n", gid);
 
-	out[gid] = in[gid]+1;
+	out[lid] = in[lid]+1;
 }

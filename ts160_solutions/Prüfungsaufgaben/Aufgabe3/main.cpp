@@ -9,20 +9,19 @@ using namespace std;
 int main(int argc, char* argv[]) {
 
 
-    OpenCLMgr oclmgr;
 
     BitonicSort * bitonicSort = new BitonicSort();
-    bitonicSort ->OpenCLmgr = &oclmgr;
+//    OpenCLMgr oclmgr;
+//    bitonicSort ->OpenCLmgr = &oclmgr;
 
+    cl_uint data[] = {1,2,3,43,4,7,56,9,5,6};
 
-    cl_uint data[] = {1,2,3,43,4,7,56,6,5,6};
-
+    bitonicSort->loadData(10, data);
+    bitonicSort->sortGPU();
 
     for(int i=0; i<10; i++){
         cout << bitonicSort->data[i] << endl;
     }
-
-    bitonicSort->loadData(10, data);
 
 
 

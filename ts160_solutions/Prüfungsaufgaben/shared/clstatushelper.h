@@ -7,6 +7,7 @@
 
 #include <CL/cl.h>
 #include <iostream>
+#include <csignal>
 
 
 inline const char* get_error_string(cl_int error)
