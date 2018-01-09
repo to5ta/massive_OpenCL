@@ -7,7 +7,7 @@
 using namespace std;
 
 #include "OpenCLMgr.h"
-#include "clstatushelper.h"
+#include "../clstatushelper.h"
 
 
 OpenCLMgr::OpenCLMgr()

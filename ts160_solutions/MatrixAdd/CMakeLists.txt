@@ -4,12 +4,15 @@ project(MatrixAdd)
 set(CMAKE_CXX_STANDARD 11)
 
 link_libraries(/usr/lib/x86_64-linux-gnu/libOpenCL.so)
+link_directories()
 
 set(SOURCE_FILES
         Matrix.cpp
         Matrix.h
         MatrixMain.cpp
         OpenCLMgr.cpp
-        OpenCLMgr.h clstatushelper.h)
+        OpenCLMgr.h
+        /home/tosta/massively_Parallel_Processors/MassiveOpenCL/ts160_solutions/clstatushelper.h
+        )
 
 add_executable(MatrixAdd ${SOURCE_FILES})

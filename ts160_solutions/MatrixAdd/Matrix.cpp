@@ -3,7 +3,7 @@
 #include <string.h>
 #include <cmath>
 
-#include "clstatushelper.h"
+#include "../clstatushelper.h"
 
 using namespace std;
 
@@ -15,7 +15,7 @@ using namespace std;
 cl_float Matrix::dummy;
 int Matrix::useGPU = 0;
 int Matrix::useSharedMemory=0;
-OpenCLMgr* Matrix::OpenCLmgr = NULL;;
+OpenCLMgr* Matrix::OpenCLmgr = NULL;
 
 
 Matrix::Matrix()

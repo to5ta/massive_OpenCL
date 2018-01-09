@@ -1,9 +1,15 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#if not defined(_WIN32) and not defined(_WIN64)
 #define TESTOK "\x1b[32mOK\x1b[0m"
 #define TESTOKRGB "\x1b[38;2;255;0;255mOK\x1b[0m"
 #define TESTFAILED "\x1b[31mFAILED\x1b[0m"
+#else
+#define TESTOK ""
+#define TESTOKRGB ""
+#define TESTFAILED ""
+#endif
 
 #define TOLERANCE 0.001f
 #define WARN_TOLERANCE 0
@@ -17,6 +23,8 @@
 #define MATRIX_NEW_IDENTITY     3
 #include "OpenCLMgr.h"
 #include "time.h"
+
+
 
 
 class Matrix {

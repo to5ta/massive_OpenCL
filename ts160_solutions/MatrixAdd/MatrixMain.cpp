@@ -87,13 +87,13 @@ int main(int argc, char* argv[])
 //    B.plot();
 //    C.plot();
 
-       int size = 3500;
+       int size = 1700;
 //    int size = 1000;
 //    int size = 1440;
 
-    for(int i=0; i<2; i++){
+    for(int i=0; i<5; i++){
 
-        size = size+500;
+        size = size*2;
 
 //         float dat[size*size] = {0};
 
@@ -141,11 +141,6 @@ int main(int argc, char* argv[])
     }
 //        M_GPU.plot("GPU");
 //        M_GPU_SHARED.plot("GPU SHARED");
-
-
-
-
-
 
 
     std::cout<<"Passed!\n";
