@@ -14,12 +14,33 @@ int main(int argc, char* argv[]) {
 //    OpenCLMgr oclmgr;
 //    bitonicSort ->OpenCLmgr = &oclmgr;
 
-    cl_uint data[] = {1,2,3,43,4,7,56,9,5,6};
+    cl_uint data[] = {1,2,3,43,4,7,56,9,5,6,22,12,32,45,77,0};
+    int dl = 16;
 
-    bitonicSort->loadData(10, data);
+    printf("-");
+    for(int i=0; i<dl; i++){
+        printf("%2i", i);
+        if(i<dl-1) {
+            printf(", ");
+        }
+    }
+    printf("-\n");
+
+    printf("[");
+    for(int i=0; i<dl; i++){
+        printf("%2i", data[i]);
+        if(i<dl-1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+
+
+
+    bitonicSort->loadData(dl, data);
     bitonicSort->sortGPU();
 
-    for(int i=0; i<10; i++){
+    for(int i=0; i<dl; i++){
         cout << bitonicSort->data[i] << endl;
     }
 

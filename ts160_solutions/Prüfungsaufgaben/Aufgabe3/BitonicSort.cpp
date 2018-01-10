@@ -1,5 +1,6 @@
 #include "BitonicSort.h"
 #include <cstring>
+#include <cmath>
 #include "../shared/clstatushelper.h"
 
 OpenCLMgr* BitonicSort::OpenCLmgr = NULL;
@@ -26,7 +27,9 @@ void BitonicSort::loadData(int newdatalength, cl_uint *newdata){
 
     if(this->data!=NULL) {
         delete [] this->data;
+        data = NULL;
     }
+
 
     this->datalength = newdatalength;
     this->data = new cl_uint[newdatalength];
@@ -46,17 +49,18 @@ void BitonicSort::sortGPU(){
 
     cl_mem OutBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_WRITE_ONLY , this->datalength*sizeof(cl_uint), NULL, NULL);
 
+
+    // Run the kernel.
+    size_t gws_0 = (((datalength/2)-1)/16+1)*16;
+//    size_t global_work_size[1] = {gws_0};
+    size_t global_work_size[1] = {gws_0};
+    size_t local_work_size[1] = {gws_0};
+
     // set arguments here....
-    status  = clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"], 0, sizeof(cl_int), (void *)&datalength);
+    status  = clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"], 0, sizeof(cl_int), (void *)&gws_0);
     status  = clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"], 1, sizeof(cl_mem), (void *)&InBuffer);
     status |= clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"], 2, sizeof(cl_mem), (void *)&OutBuffer);
     check_error(status);
-
-    // Run the kernel.
-    size_t gws_0 = ((datalength-1)/16+1)*16;
-//    size_t global_work_size[1] = {gws_0};
-    size_t global_work_size[1] = {1024};
-    size_t local_work_size[1] = {1024};
 
 
     printf("Global Work Size: [%i], ", global_work_size[0]);
