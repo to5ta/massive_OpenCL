@@ -30,9 +30,15 @@ void BitonicSort::loadData(int newdatalength, cl_uint *newdata){
         data = NULL;
     }
 
+//    if(pow( (int)(log2(newdatalength))+1
 
-    this->datalength = newdatalength;
-    this->data = new cl_uint[newdatalength];
+    int powerlength = (int)(pow(2, ceil(log2(newdatalength))));
+
+    printf("Suggested Length: %i\n", powerlength);
+
+    this->reallength = newdatalength;
+    this->datalength = powerlength;
+    this->data = new cl_uint[powerlength]();
     memcpy(this->data, newdata, sizeof(cl_uint)*newdatalength);
 }
 
@@ -51,7 +57,7 @@ void BitonicSort::sortGPU(){
 
 
     // Run the kernel.
-    size_t gws_0 = (((datalength/2)-1)/16+1)*16;
+    size_t gws_0 = (((datalength)-1)/16+1)*16;
 //    size_t global_work_size[1] = {gws_0};
     size_t global_work_size[1] = {gws_0};
     size_t local_work_size[1] = {gws_0};
@@ -73,6 +79,13 @@ void BitonicSort::sortGPU(){
     // Read the output back to host memory.
     status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, OutBuffer, CL_TRUE, 0, datalength*sizeof(cl_uint), data, 0, NULL, NULL);
     check_error(status);
+
+    // cut leading Zeros again!
+    cl_uint * raw_data = new cl_uint[reallength];
+    memcpy(raw_data, this->data+(datalength-reallength), sizeof(cl_uint)*reallength);
+    delete [] this->data;
+    this->data = NULL;
+    this->data = raw_data;
 
     // release buffers
     status = clReleaseMemObject(InBuffer);

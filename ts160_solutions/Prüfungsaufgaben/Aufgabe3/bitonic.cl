@@ -1,4 +1,5 @@
 
+#define DEBUG_INFO 0
 
 int powi(int x, int e){
     return (int)(pow((float)(x),e));
@@ -14,7 +15,9 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
     if(gid>=length/2)
         return;
 
-    printf("GID: %i\n", gid);
+    if(DEBUG_INFO){
+        printf("GID: %i\n", gid);
+    }
 
     out[gid*2] = in[gid*2];
     out[gid*2+1] = in[gid*2+1];
@@ -28,9 +31,9 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
     // https://www.geeksforgeeks.org/bitonic-sort/
 
     float l = (float)(length/2);
-    int total_steps = (log(l)*(log(l)+1))/2.;
+    int total_steps = (log(l)*(log(l)+1))/2;
 
-    if(gid==gid_observe){
+    if(gid==gid_observe && DEBUG_INFO){
         printf("Total Steps: %i\n", total_steps);
         printf("Initial Values: \n");
         printf("-");
@@ -54,13 +57,8 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
 
         for(int stage=step; stage>=0; stage--){
 
-             // id0 = gid  +   offset*gruppe
-            int id0;
-            if(stage<2)
-                id0 = gid + powi(2,stage)*(gid/(stage+1));
-            else
-                id0 = gid + powi(2,stage)*(gid/(powi(stage, 2)));
-//                id0 = gid + powi(2,stage)*(gid/(stage+2));
+            // id0 = gid + offset*gruppe
+            int id0 = gid + powi(2,stage)*(gid/(powi(2, stage)));
 
             // id1 = id0 + offset
             int id1 = id0 + powi(2,stage);
@@ -90,7 +88,7 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
 
 
             // debug only
-            if(gid==gid_observe||1){
+            if(DEBUG_INFO){
                 printf("Step: %i Stage: %i:   GID: %2i   ID_0: %2i -> %2i   Dir: %i   "\
                        " id0: %3i id1: %3i\n",step, stage, gid, id0, id1, dir, out[id0], out[id1]);
 
@@ -100,7 +98,7 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
 
 
             }
-            if(gid==gid_observe){
+            if(gid==gid_observe && DEBUG_INFO){
 
                 printf("-");
                 for(int i=0; i<length; i++){
@@ -123,7 +121,7 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
             }
 
         }
-        if(gid==gid_observe){
+        if(gid==gid_observe && DEBUG_INFO){
             printf("\n");
         }
     }

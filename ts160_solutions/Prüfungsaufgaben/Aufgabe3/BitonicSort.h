@@ -18,6 +18,7 @@ public:
 
     cl_uint *data = NULL;
     int datalength = 0;
+    int reallength = 0;
 
 private:
 
