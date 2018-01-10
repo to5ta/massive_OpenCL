@@ -149,10 +149,10 @@ cl_int OpenCLMgr::createContext(){
 //					NULL);
 //	cout << "CL_DEVICE_MAX_COMPUTE_UNITS: " << devMaxComputeUnits << endl;
 //
-//	size_t devMaxWorkGroupSize = 0;
-//	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(devMaxWorkGroupSize),
-//					&(devMaxWorkGroupSize), NULL);
-//	cout << "CL_DEVICE_MAX_WORK_GROUP_SIZE: " << devMaxWorkGroupSize << endl;
+	size_t devMaxWorkGroupSize = 0;
+	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(devMaxWorkGroupSize),
+					&(devMaxWorkGroupSize), NULL);
+	cout << "CL_DEVICE_MAX_WORK_GROUP_SIZE: " << devMaxWorkGroupSize << endl;
 //
 //	cl_uint devMaxWorkItemDims = 0;
 //	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(devMaxWorkItemDims),
