@@ -9,6 +9,7 @@ set(SOURCE_FILES    main.cpp
         ../shared/ansi_colors.h
         ../shared/clstatushelper.h
         ../shared/OpenCLMgr.cpp
+        ../shared/ansi_colors.h
         ../shared/OpenCLMgr.h
         PrefixSum.cpp
         PrefixSum.h)

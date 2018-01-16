@@ -39,6 +39,8 @@ public:
 	cl_uint numDevices = 0;
 	cl_uint deviceNo = 0; // ?1;
 	cl_device_id *devices;
+
+	cl_ulong maxMem=0;
 	
 //	cl_kernel           matadd_kernel;
 //    cl_kernel           matmul_kernel;

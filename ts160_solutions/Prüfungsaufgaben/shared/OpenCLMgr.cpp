@@ -138,8 +138,10 @@ cl_int OpenCLMgr::createContext(){
 	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_NAME, 100, devname, NULL);
 	cout << "Using Device: " << devname << endl;
 
-//	cl_ulong maxMem;
-//	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_MEM_ALLOC_SIZE, 100, &(maxMem), NULL);
+	// store size of memory which can be allocated at once
+	clGetDeviceInfo(devices[deviceNo], CL_DEVICE_MAX_MEM_ALLOC_SIZE, 100, &(maxMem), NULL);
+
+
 //	cout << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << maxMem << " bytes" << endl;
 //	cout << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << maxMem / 1048576.f << " MB" << endl;
 //
