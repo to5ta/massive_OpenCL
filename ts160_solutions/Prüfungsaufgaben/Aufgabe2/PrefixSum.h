@@ -7,13 +7,16 @@ class PrefixSum {
 
 public:
     PrefixSum();
+
     virtual ~PrefixSum();
 
-    static OpenCLMgr * OpenCLmgr;
+    static OpenCLMgr *OpenCLmgr;
 
 
     void loadData(int newdatalength, cl_uint *newdata);
+
     void prefixSumGPU();
+
     void printInfo();
 
     cl_uint *inputData = NULL;
@@ -23,14 +26,10 @@ public:
     int reallength = 0;
 
 private:
-    void plotData(cl_uint* owndata);
+    void plotData(cl_uint *owndata, int length);
 
+//    void prefixSumsPerBlock(cl_uint *inputdata, cl_uint *blockwiseprefix, int length);
+    void prefixSumsPerBlock(cl_mem input, cl_mem prefix, cl_mem helpsum, int length);
 };
-
-
-
-
-
-
 
 #endif //AUFGABE2_PREFIXSUM_H

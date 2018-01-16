@@ -17,15 +17,15 @@ int main() {
 //    int dl = 12;
 
 //    int dl = (int)(pow(256,2))+12345;
-    int dl = (int)(pow(256,3));
+    int dl = (int) (pow(256, 3));
 //    cl_uint numbers_to_sum[dl];
 
-    cl_uint* numbers_to_sum = (cl_uint*)(malloc(sizeof(cl_uint)*dl));
-    assert(numbers_to_sum!=NULL);
+    cl_uint *numbers_to_sum = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
+    assert(numbers_to_sum != NULL);
 
 
-    for(cl_uint i=0; i<dl; i++){
-        numbers_to_sum[i] = (int)(rand() % 10);
+    for (cl_uint i = 0; i < dl; i++) {
+        numbers_to_sum[i] = (int) (rand() % 10);
     }
 
     prefixSum.loadData(dl, numbers_to_sum);
@@ -33,7 +33,6 @@ int main() {
     prefixSum.prefixSumGPU();
 
 
-
-    cout  << "Aufgabe 2 ["<<  ANSI_COLOR_BRIGHTGREEN << "OK" << ANSI_COLOR_RESET << "]" << endl;
+    cout << "Aufgabe 2 [" << ANSI_COLOR_BRIGHTGREEN << "OK" << ANSI_COLOR_RESET << "]" << endl;
     return 0;
 }
