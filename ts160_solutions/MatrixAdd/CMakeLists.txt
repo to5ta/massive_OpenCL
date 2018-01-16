@@ -12,7 +12,7 @@ set(SOURCE_FILES
         MatrixMain.cpp
         OpenCLMgr.cpp
         OpenCLMgr.h
-        /home/tosta/massively_Parallel_Processors/MassiveOpenCL/ts160_solutions/clstatushelper.h
+        ../clstatushelper.h
         )
 
 add_executable(MatrixAdd ${SOURCE_FILES})

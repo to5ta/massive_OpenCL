@@ -18,4 +18,4 @@ set(SOURCE_FILES
         ../shared/clstatushelper.h
         )
 
-add_executable(Aufgabe1 ${SOURCE_FILES})
+add_executable(Aufgabe3 ${SOURCE_FILES})
