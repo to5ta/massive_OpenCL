@@ -1,0 +1,9 @@
+*.sln
+*.suo
+*.vcxproj*
+*.db
+*.zip
+*.sdf*
+*cmake-build*
+*.idea
+*.vs
