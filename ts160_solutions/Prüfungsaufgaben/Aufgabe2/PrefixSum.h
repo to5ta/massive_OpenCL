@@ -31,11 +31,26 @@ private:
     void plotData(cl_uint *owndata, int length);
     void plotCLBuffer(cl_mem, int length);
 
+
     // void calculateLevelBlocks(cl_mem input0, cl_mem prefix0, cl_mem input1, cl_mem prefix1, int length0,int length1);
 
-    void addBlockSumToPrefix(cl_mem prefix0, cl_mem input1, int length1, int blocksize);
-    void calcBlockSums(cl_mem input0, cl_mem prefix0, cl_mem input1, int length1, int blocksize);
-    void prefixBlockwise(cl_mem input0, cl_mem prefix0, int length0, int blocksize);
+    void addBlockSumToPrefix(   cl_mem  prefix0,
+                                cl_mem  input1,
+                                int     length0,
+                                int     length1,
+                                int     blocksize);
+
+    void calcBlockSums(     cl_mem  input0,
+                            cl_mem  prefix0,
+                            cl_mem  input1,
+                            int     length0,
+                            int     length1,
+                            int     blocksize);
+
+    void prefixBlockwise(   cl_mem  input0,
+                            cl_mem  prefix0,
+                            int     length0,
+                            int     blocksize);
 };
 
 #endif //AUFGABE2_PREFIXSUM_H

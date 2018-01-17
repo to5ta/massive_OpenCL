@@ -18,7 +18,7 @@ int main() {
 
 //    int dl = (int)(pow(256,2))+12345;
 //    int dl = (int) (pow(256, 1));
-    int dl = 256 * 3;
+    int dl = 256 *3-50;
 
 //    cl_uint numbers_to_sum[dl];
 
@@ -27,7 +27,7 @@ int main() {
 
 
     for (cl_uint i = 0; i < dl; i++) {
-        numbers_to_sum[i] = (int) (rand() % 10);
+        numbers_to_sum[i] = (int) (rand()%9)+1;
     }
 
     prefixSum.loadData(dl, numbers_to_sum);
