@@ -49,7 +49,6 @@ void BitonicSort::sortGPU(){
     cl_int status=0;
 
     cl_mem InBuffer = clCreateBuffer(this->OpenCLmgr->context, CL_MEM_READ_ONLY, datalength*sizeof(cl_uint), NULL, NULL);
-
     status          = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, InBuffer, CL_TRUE, 0, this->datalength*sizeof(cl_uint), this->data, 0, NULL, NULL);
     check_error(status);
 

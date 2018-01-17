@@ -12,8 +12,8 @@ OpenCLMgr *PrefixSum::OpenCLmgr = NULL;
 PrefixSum::PrefixSum() {
     OpenCLmgr = new OpenCLMgr();
     OpenCLmgr->buildProgram("../prefixSum.cl");
-    const char *kernel_names[] = {"prefixSum_kernel"};
-    OpenCLmgr->createKernels(kernel_names, 1);
+    const char *kernel_names[] = {"addBlockSumToPrefix_kernel", "calcBlockSum_kernel", "prefixBlockwise_kernel"};
+    OpenCLmgr->createKernels(kernel_names, 3);
 
 }
 
@@ -88,86 +88,53 @@ void PrefixSum::printInfo() {
 }
 
 
-//void PrefixSum::prefixSumsPerBlock(cl_uint *inputdata, cl_uint *blockwiseprefix, int length) {
-void PrefixSum::prefixSumsPerBlock(cl_mem input, cl_mem prefix, cl_mem helpsum, int length) {
-//    printf("Inputdata adress: %x\n", inputdata);
+
+void PrefixSum::addBlockSumToPrefix(cl_mem prefix0, cl_mem input1, int length1, int blocksize) {
+
+}
 
 
-//    start kernels here
 
-//    kernel should first calculate prefixes per block, storing it in prefix
+void PrefixSum::calcBlockSums(cl_mem input0, cl_mem prefix0, cl_mem input1, int length1, int blocksize) {
 
-//    sum then last element and last prefix sum per block, gives sum of a block
+}
 
-    // how do we get the data back?
-    // do we have to?
-    // is it still there?
-    // do we need write/read/write-read buffers?!?!?
+
+
+void PrefixSum::prefixBlockwise(cl_mem input0, cl_mem prefix0, int length0, int blocksize) {
+    cl_int status;
+    status = clSetKernelArg(OpenCLmgr->kernels["prefixBlockwise_kernel"], 0, sizeof(cl_mem), (void *) &input0);
+    check_error(status);
+
+    status |= clSetKernelArg(OpenCLmgr->kernels["prefixBlockwise_kernel"], 1, sizeof(cl_mem), (void *) &prefix0);
+    status |= clSetKernelArg(OpenCLmgr->kernels["prefixBlockwise_kernel"], 2, sizeof(cl_int), (void *) &length0);
+    status |= clSetKernelArg(OpenCLmgr->kernels["prefixBlockwise_kernel"], 3, sizeof(cl_int), (void *) &blocksize);
+    check_error(status);
+
+    size_t gws[1] = {blocksize};
+    size_t lws[1] = {blocksize};
+
+    status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->kernels["prefixBlockwise_kernel"], 1, NULL, gws,
+                                    lws, 0, NULL, NULL);
+    check_error(status);
 
     return;
-
-
-    cl_int status = 0;
-
-    cl_mem BufferA = clCreateBuffer(this->OpenCLmgr->context, CL_MEM_READ_ONLY, datalength * sizeof(cl_uint), NULL,
-                                    NULL);
-
-    status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, BufferA, CL_TRUE, 0, this->datalength * sizeof(cl_uint),
-                                  this->inputData, 0, NULL, NULL);
-    check_error(status);
-
-    cl_mem OutBuffer = clCreateBuffer(OpenCLmgr->context, CL_MEM_WRITE_ONLY, this->datalength * sizeof(cl_uint), NULL,
-                                      NULL);
-
-
-    // Run the kernel.
-    size_t gws_0 = (((datalength) - 1) / 16 + 1) * 16;
-//    size_t global_work_size[1] = {gws_0};
-    size_t global_work_size[1] = {gws_0};
-    size_t local_work_size[1] = {gws_0};
-
-    // set arguments here....
-    status = clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"], 0, sizeof(cl_int), (void *) &gws_0);
-    status = clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"], 1, sizeof(cl_mem), (void *) &BufferA);
-    status |= clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"], 2, sizeof(cl_mem), (void *) &OutBuffer);
-    check_error(status);
-
-
-    printf("Global Work Size: [%5i], ", global_work_size[0]);
-    printf("Local Work Size:  [%5i]\n", local_work_size[0]);
-
-    // actually start kernel ("enqueue")
-    status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->kernels["bitonic_kernel"], 1, NULL,
-                                    global_work_size, local_work_size, 0, NULL, NULL);
-    check_error(status);
-
-    // Read the output back to host memory.
-    status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, OutBuffer, CL_TRUE, 0, datalength * sizeof(cl_uint),
-                                 inputData, 0, NULL, NULL);
-    check_error(status);
-
-    // cut leading Zeros again!
-    cl_uint *raw_data = new cl_uint[reallength];
-    memcpy(raw_data, this->inputData + (datalength - reallength), sizeof(cl_uint) * reallength);
-    delete[] this->inputData;
-    this->inputData = NULL;
-    this->inputData = raw_data;
-
-    // release buffers
-    status = clReleaseMemObject(BufferA);
-    status |= clReleaseMemObject(OutBuffer);
-    check_error(status);
 }
+
 
 
 void PrefixSum::prefixSumGPU() {
 
+    int blocksize = 256;
+
+    cl_int status;
+
     int levels = (int) (log(datalength) / log(256));
-    cl_uint *inputs[levels];
-    cl_uint *prefix[levels];
+    cl_mem inputs[levels];
+    cl_mem prefix[levels];
+    int lengths[levels];
 
     printf("Start Prefix calculation...\n");
-
     printf("Real Data Length: %12i\n", reallength);
     printf("Round up to x256: %12i\n", datalength);
 
@@ -185,25 +152,26 @@ void PrefixSum::prefixSumGPU() {
         printf("Card supports up to:    %12u Bytes at once!\n", OpenCLmgr->maxMem);
     }
 
-    // dangerous, ensure this data is never freed
-    inputs[0] = this->inputData;
-    prefix[0] = this->prefixData;
+    inputs[0] = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, datalength * sizeof(cl_uint), NULL, NULL);
+    status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, inputs[0], CL_TRUE, 0, datalength * sizeof(cl_uint),
+                                  inputData, 0, NULL, NULL);
+    check_error(status);
+    prefix[0] = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_WRITE, datalength * sizeof(cl_uint), NULL, NULL);
 
-    int bufferLevelSize = datalength;
+    // buffer Length Size
+    int bLS = datalength;
+    lengths[0] = bLS;
 
-    // create level buffers, level 0 buffer given through class member buffers
+    // create level buffers
     for (int level = 1; level < levels; level++) {
 
-        bufferLevelSize = ((bufferLevelSize - 1) / 256 + 1);
-        bufferLevelSize = ((bufferLevelSize - 1) / 256 + 1) * 256;
-        printf("Creating Buffers of Length %5i for Level %i...\n", bufferLevelSize, level);
+        bLS = ((bLS - 1) / 256 + 1);
+        bLS = ((bLS - 1) / 256 + 1) * 256;
+        lengths[level] = bLS;
+        printf("Creating Buffers of Length %5i for Level %i...\n", bLS, level);
 
-        inputs[level] = (cl_uint *) (malloc(sizeof(cl_uint) * bufferLevelSize));
-//        inputs[level] = new cl_uint[bufferLevelSize]();
-        assert(inputs[level] != NULL);
-        prefix[level] = (cl_uint *) (malloc(sizeof(cl_uint) * bufferLevelSize));
-//        inputs[level] = new cl_uint[bufferLevelSize]();
-        assert(prefix[level] != NULL);
+        inputs[level] = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_WRITE, bLS * sizeof(cl_uint), NULL, NULL);
+        prefix[level] = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_WRITE, bLS * sizeof(cl_uint), NULL, NULL);
     }
 
 
@@ -211,26 +179,28 @@ void PrefixSum::prefixSumGPU() {
     for (int level = 0; level < levels; level++) {
         printf("Calculate PrefixSums block by block for Level %i...\n", level);
 
-//        clCreateBuffer(....
+        if(level>0){
+            // blocksum aka new input data
+            calcBlockSums(inputs[level-1], prefix[level-1], inputs[level], lengths[level], blocksize);
+        }
 
-//        prefixSumsPerBlock(....
-
-//        addPrefixAndBlock(.....  block + blocksum-buffer  
-     }
+        // simple blockwise prefixes
+        prefixBlockwise(inputs[level], prefix[level], lengths[level], blocksize);
+    }
 
 
     // build real prefixes, add previous prefix sums (block by block internal + block sum)
-    for (int output = levels; output >= 0; output--) {
+    for (int output = levels; output > 1; output--) {
+        // addBlockSumToPrefix
+        printf("Add BlockSums to Blockwise Prefixes..\n");
 
     }
 
 
-    for (int level = 1; level < levels; level++) {
-        printf("Free Buffers for Level %i...\n", level);
-//        delete [] inputs[level];
-        free(inputs[level]);
-//        delete [] prefix[level];
-        free(prefix[level]);
+    for (int level = 0; level < levels; level++) {
+        printf("Release Buffers for Level %i...\n", level);
+        clReleaseMemObject(inputs[level]);
+        clReleaseMemObject(prefix[level]);
     }
 
     return;

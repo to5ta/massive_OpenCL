@@ -191,9 +191,9 @@ Matrix Matrix::operator+(const Matrix& m)
 			size_t local_work_size[2] = {result.width, result.height};
 
 			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matadd_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
-			//CHECK_SUCCESS("Error: enqueuing kernel!")
-			
             check_error(status);
+            //CHECK_SUCCESS("Error: enqueuing kernel!")
+
 			// Read the output back to host memory.
 			status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, CBuffer, CL_TRUE, 0, result.width*result.height*sizeof(cl_float), result.data, 0, NULL, NULL);
 			//CHECK_SUCCESS("Error: reading buffer!")
@@ -292,8 +292,7 @@ Matrix Matrix::operator*(const Matrix& m)
 
 			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmulshared_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
 			check_error(status);
-			status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue, OpenCLmgr->matmulshared_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL);
-			check_error(status);
+
 //			printf("status %i\n", status);
             // CHECK_SUCCESS("Error: enqueuing kernel!")
 

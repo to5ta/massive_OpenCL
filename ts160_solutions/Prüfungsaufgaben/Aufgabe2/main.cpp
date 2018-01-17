@@ -17,7 +17,7 @@ int main() {
 //    int dl = 12;
 
 //    int dl = (int)(pow(256,2))+12345;
-    int dl = (int) (pow(256, 3));
+    int dl = (int) (pow(256, 1));
 //    cl_uint numbers_to_sum[dl];
 
     cl_uint *numbers_to_sum = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
