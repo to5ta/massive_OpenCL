@@ -25,8 +25,11 @@ public:
     int datalength = 0;
     int reallength = 0;
 
+    int blocksize = 256;
+
 private:
     void plotData(cl_uint *owndata, int length);
+    void plotCLBuffer(cl_mem, int length);
 
     // void calculateLevelBlocks(cl_mem input0, cl_mem prefix0, cl_mem input1, cl_mem prefix1, int length0,int length1);
 

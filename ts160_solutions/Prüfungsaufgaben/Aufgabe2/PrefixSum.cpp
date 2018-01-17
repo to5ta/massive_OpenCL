@@ -5,6 +5,8 @@
 #include "../shared/ansi_colors.h"
 #include <assert.h>
 
+#define SHORTEN_PLOT 0
+#define BLOCKSIZE_PLOT 1
 
 OpenCLMgr *PrefixSum::OpenCLmgr = NULL;
 
@@ -52,10 +54,10 @@ void PrefixSum::plotData(cl_uint *owndata, int length) {
     printf("[");
     for (int i = 0; i < length; i++) {
         if (i < reallength)
-            printf("%3i", owndata[i]);
+            printf("%5i", owndata[i]);
         else {
             printf(ANSI_COLOR_RED);
-            printf("%3i", owndata[i]);
+            printf("%5i", owndata[i]);
             printf(ANSI_COLOR_RESET);
         }
 
@@ -66,7 +68,10 @@ void PrefixSum::plotData(cl_uint *owndata, int length) {
         if ((i + 1) % columns == 0)
             printf("\n ");
 
-        if (i + 1 == columns * lines && length > columns * lines * 2 + 1) {
+        if ((i + 1) % blocksize == 0 && BLOCKSIZE_PLOT)
+            printf("\n ");
+
+        if (i + 1 == columns * lines && length > columns * lines * 2 + 1 && SHORTEN_PLOT) {
             printf("  ...\n ");
             i = length - 1 - columns * lines;
         }
@@ -88,17 +93,26 @@ void PrefixSum::printInfo() {
 }
 
 
-
 void PrefixSum::addBlockSumToPrefix(cl_mem prefix0, cl_mem input1, int length1, int blocksize) {
 
 }
-
 
 
 void PrefixSum::calcBlockSums(cl_mem input0, cl_mem prefix0, cl_mem input1, int length1, int blocksize) {
 
 }
 
+
+void PrefixSum::plotCLBuffer(cl_mem buffer, int length) {
+    cl_uint temp[length];
+    cl_int status;
+    status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, buffer, CL_TRUE, 0, length * sizeof(int), temp, 0, NULL,
+                                 NULL);
+    check_error(status);
+
+    plotData(temp, length);
+
+}
 
 
 void PrefixSum::prefixBlockwise(cl_mem input0, cl_mem prefix0, int length0, int blocksize) {
@@ -122,14 +136,12 @@ void PrefixSum::prefixBlockwise(cl_mem input0, cl_mem prefix0, int length0, int 
 }
 
 
-
 void PrefixSum::prefixSumGPU() {
-
-    int blocksize = 256;
 
     cl_int status;
 
-    int levels = (int) (log(datalength) / log(256));
+    int levels = (int) (ceil((log(datalength) / log(256))));
+
     cl_mem inputs[levels];
     cl_mem prefix[levels];
     int lengths[levels];
@@ -177,25 +189,34 @@ void PrefixSum::prefixSumGPU() {
 
     // do the blockwise prefix stuff repetitive
     for (int level = 0; level < levels; level++) {
-        printf("Calculate PrefixSums block by block for Level %i...\n", level);
 
-        if(level>0){
+        if (level > 0) {
             // blocksum aka new input data
-            calcBlockSums(inputs[level-1], prefix[level-1], inputs[level], lengths[level], blocksize);
+            printf("Calculate Block Sums for Level %i (each two last of a block)...\n", level);
+            calcBlockSums(inputs[level - 1], prefix[level - 1], inputs[level], lengths[level], blocksize);
         }
 
         // simple blockwise prefixes
+        printf("Calculate Prefix Blockwise for Level %i...\n", level);
         prefixBlockwise(inputs[level], prefix[level], lengths[level], blocksize);
+        if (level == 0)
+            plotCLBuffer(prefix[0], lengths[0]);
     }
 
 
     // build real prefixes, add previous prefix sums (block by block internal + block sum)
-    for (int output = levels; output > 1; output--) {
+    for (int output = levels - 1; output > 0; output--) {
         // addBlockSumToPrefix
-        printf("Add BlockSums to Blockwise Prefixes..\n");
-
+        printf("Add Prefixed Block Sums L%i to Blockwise Prefixes L%i...\n", output, output - 1);
+        addBlockSumToPrefix(inputs[output - 1], prefix[output], lengths[output], blocksize);
     }
 
+
+    status = clEnqueueReadBuffer(OpenCLmgr->commandQueue, prefix[0], CL_TRUE, 0, 256 * sizeof(int), prefixData, 0, NULL,
+                                 NULL);
+    check_error(status);
+
+//    plotData(prefixData, datalength);
 
     for (int level = 0; level < levels; level++) {
         printf("Release Buffers for Level %i...\n", level);
@@ -205,5 +226,5 @@ void PrefixSum::prefixSumGPU() {
 
     return;
 
-
 }
+
