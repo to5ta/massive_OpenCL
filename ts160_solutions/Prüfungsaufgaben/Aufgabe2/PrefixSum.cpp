@@ -5,7 +5,7 @@
 #include "../shared/ansi_colors.h"
 #include <assert.h>
 
-#define SHORTEN_PLOT 0
+#define SHORTEN_PLOT 1
 #define BLOCKSIZE_PLOT 1
 
 OpenCLMgr *PrefixSum::OpenCLmgr = NULL;
