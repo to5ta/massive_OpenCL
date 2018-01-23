@@ -78,7 +78,7 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
     // summize workgroup-internal histograms & copy to buffer
     int step_size = 256 / GROUP_SIZE;  // 256%GROUP_SIZE MUST BE ZERO!
 
-    if(gid==0){
+    if(gid==0 && DEBUG_PRINT){
         printf("stepsize: %i\n", step_size);
     }
     for (int k = 0; k < step_size; k++) {
