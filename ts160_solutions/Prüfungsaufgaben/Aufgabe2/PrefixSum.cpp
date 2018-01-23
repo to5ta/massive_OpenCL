@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #define SHORTEN_PLOT 1
+#define SHOW_PLACEHOLDER 0
 #define BLOCKSIZE_PLOT 1
 
 OpenCLMgr *PrefixSum::OpenCLmgr = NULL;
@@ -85,11 +86,11 @@ void PrefixSum::printInfo() {
     printf("Data Buffer Length: %5i\n", datalength);
     printf("Real Data Length:   %5i, %i dummy elements at the end.\n", reallength, datalength - reallength);
 
-    plotData(this->inputData, datalength);
-//
-//    printf("Prefix Data\n");
-//    plotData(this->prefixData);
-
+    if(SHOW_PLACEHOLDER){
+        plotData(inputData, datalength);
+    } else {
+        plotData(inputData, reallength);
+    }
 }
 
 
@@ -262,7 +263,12 @@ void PrefixSum::prefixSumGPU() {
     check_error(status);
 
     printf("Result: \n");
-    plotData(prefixData, datalength);
+
+    if(SHOW_PLACEHOLDER){
+        plotData(prefixData, datalength);
+    } else {
+        plotData(prefixData, reallength);
+    }
 
     for (int level = 0; level < levels; level++) {
         printf("Release Buffers for Level %i...\n", level);

@@ -11,11 +11,11 @@ __kernel void addBlockSumToPrefix_kernel(__global int *blockPrefix, // 256 x lon
     // __local int local_data[blocksize];
 
     if (gid == 0) {
-        printf("lengthBlockSums:  %6i\n", lengthBlockSums);
-        printf("blocksize:        %6i\n", blocksize);
-        printf("lengthBlockPrefix:%6i\n", lengthBlockPrefix);
-        printf("lengthBlockSums  :%6i\n", lengthBlockSums);
-        printf("blocksize        :%6i\n", blocksize);
+        printf("\nlengthBlockSums  :%12i\n", lengthBlockSums);
+        printf("blocksize        :%12i\n", blocksize);
+        printf("lengthBlockPrefix:%12i\n", lengthBlockPrefix);
+        printf("lengthBlockSums  :%12i\n", lengthBlockSums);
+        printf("blocksize        :%12i\n", blocksize);
     }
 
 
