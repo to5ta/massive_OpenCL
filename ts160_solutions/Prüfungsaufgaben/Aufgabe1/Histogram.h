@@ -16,7 +16,8 @@ public:
     void loadFile(char* filepath, int channels);
     void calcHist();
 
-    void plotData();
+    void plotImageData();
+    void plotHistogram();
 
     unsigned char *rgb_data = NULL;
     cl_uint *hist = NULL;
