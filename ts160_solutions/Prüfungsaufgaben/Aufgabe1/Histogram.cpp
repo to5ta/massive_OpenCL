@@ -8,7 +8,7 @@ OpenCLMgr *Histogram::OpenCLmgr = NULL;
 
 Histogram::Histogram(){
     OpenCLmgr = new OpenCLMgr();
-    OpenCLmgr->buildProgram("../Histogram.cl");
+    OpenCLmgr->buildProgram("../Histogram2.cl");
     const char *kernel_names[] = {"calcStatistic_kernel", "reduceStatistic_kernel"};
     OpenCLmgr->createKernels(kernel_names, 2);
 }
@@ -18,6 +18,7 @@ Histogram::~Histogram(){
     delete [] hist;
     delete [] rgb_data;
 }
+
 
 void
 Histogram::loadFile(char* filepath, int channels){
@@ -59,6 +60,7 @@ Histogram::plotHistogram(){
         return;
     }
 
+    uint total_count = 0;
 
     for (int j = 0; j < 256; ++j) {
         printf("[%3i]: %12i; ",j, hist[j]);
@@ -66,7 +68,6 @@ Histogram::plotHistogram(){
         if((j+1)%10==0)
             printf("\n");
     }
-
     printf("\n\n");
 
 
@@ -80,6 +81,10 @@ Histogram::plotHistogram(){
         printf("%3i% |", p*5);
         for (int b = 0; b < 256; ++b) {
             float c = (float)(hist[b]);
+
+            if(p==0){
+                total_count += hist[b];
+            }
 
 //            if(b==255)
 //                printf("%f\n", c);
@@ -97,15 +102,16 @@ Histogram::plotHistogram(){
     }
 
     printf("      ");
-    for (int k = 0; k < 16; ++k) {
-        printf("%-16c", '|');
+    for (int k = 0; k < 52; ++k) {
+        printf("%-5c", '^');
     }
     printf("\n      ");
-    for (int k = 0; k < 16; ++k) {
-        printf("%-16i", k*16);
+    for (int k = 0; k < 52; ++k) {
+        printf("%-5i", k*5);
     }
-    printf("\n");
     printf("\n\n");
+    printf("Total : %12i\n", total_count);
+    printf("Pixels: %12i\n", height*width);
 
 }
 
@@ -144,8 +150,12 @@ Histogram::calcHist(){
 
     printf("Buffersize: %12i\n", buffersize);
 
-    size_t gws[1] = {(width*height+8191)/8192*32 };
-    size_t lws[1] = {32};
+    int pixels_per_workitem = 64;
+    int group_size= 32;
+    int pixels_per_group = pixels_per_workitem*group_size;
+
+    size_t gws[1] = {(width*height+pixels_per_group-1)/pixels_per_group*group_size};
+    size_t lws[1] = {group_size};
     int workgroups = gws[0]/lws[0];
 
     uint * local_histograms = new uint[workgroups*256]();
@@ -240,6 +250,19 @@ Histogram::calcHist(){
                                   NULL);
     check_error(status);
 
+
+    for (int i = 0; i < workgroups; ++i) {
+        printf("LOCAL HISTOGRAM: %i\n", i);
+        for (int j = 0; j < 256; ++j) {
+            printf("[%3i]: %12i; ",j, local_histograms[i*256+j]);
+
+            if((j+1)%10==0)
+                printf("\n");
+        }
+        printf("\n\n");
+    }
+
+
     // reduce
     status = clSetKernelArg(OpenCLmgr->kernels["reduceStatistic_kernel"],
                             0,
@@ -274,7 +297,7 @@ Histogram::calcHist(){
                                   hist_buffer,
                                   CL_TRUE,
                                   0,
-                                  256*sizeof(uint),
+                                  256*sizeof(int),
                                   this->hist,
                                   0,
                                   NULL,
@@ -284,19 +307,6 @@ Histogram::calcHist(){
 
 
 
-//    memcpy(hist, local_histograms, 256*sizeof(uint));
-//
-
-//    for (int i = 0; i < workgroups; ++i) {
-//        printf("LOCAL HISTOGRAM: %i\n", i);
-//        for (int j = 0; j < 256; ++j) {
-//            printf("[%3i]: %12i; ",j, local_histograms[i*256+j]);
-//
-//            if((j+1)%10==0)
-//                printf("\n");
-//        }
-//        printf("\n\n");
-//    }
 
     clReleaseMemObject(rgb_buffer);
     clReleaseMemObject(hist_buffer);
@@ -304,10 +314,7 @@ Histogram::calcHist(){
 
     delete [] local_histograms;
 
-
-
-
-    plotImageData();
+//    plotImageData();
     plotHistogram();
 
 
