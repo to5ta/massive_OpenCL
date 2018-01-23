@@ -81,6 +81,8 @@ Histogram::calcHist(){
 
     int buffersize = width*height*3;
 
+    printf("Buffersize: %i\n", buffersize);
+
     size_t gws[1] = {(width*height+8191)/8192*32 };
     size_t lws[1] = {32};
     int workgroups = gws[0]/lws[0];
@@ -135,16 +137,16 @@ Histogram::calcHist(){
     printf("Work Groups     : %12i\n", workgroups);
 
 
-    clEnqueueNDRangeKernel(OpenCLmgr->commandQueue,
-                           OpenCLmgr->kernels["calcStatistic"],
-                           1,
-                           NULL,
-                           gws,
-                           lws,
-                           0,
-                           NULL,
-                           NULL);
-
+    status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue,
+                                    OpenCLmgr->kernels["calcStatistic"],
+                                    1,
+                                    NULL,
+                                    gws,
+                                    lws,
+                                    0,
+                                    NULL,
+                                    NULL);
+    check_error(status);
 
     status = clEnqueueReadBuffer( OpenCLmgr->commandQueue,
                                   hist_buffer,
@@ -158,20 +160,20 @@ Histogram::calcHist(){
     check_error(status);
 
 
-    for (int i = 0; i < workgroups; ++i) {
-        for (int j = 0; j < 256; ++j) {
-            printf("[%3i]: %12i; ",j, local_histograms[i][j]);
-            if((j+1)%10==0)
-                printf("\n");
-        }
-        printf("\n\n");
-    }
-
+//    for (int i = 0; i < workgroups; ++i) {
+//        for (int j = 0; j < 256; ++j) {
+//            printf("[%3i]: %12i; ",j, local_histograms[i][j]);
+//            if((j+1)%10==0)
+//                printf("\n");
+//        }
+//        printf("\n\n");
+//    }
+//
 
     clReleaseMemObject(rgb_buffer);
 
 
-//    plotData();
+    plotData();
 
 
 }
