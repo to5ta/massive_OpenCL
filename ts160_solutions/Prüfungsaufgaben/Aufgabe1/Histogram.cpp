@@ -1,12 +1,12 @@
 #include "Histogram.h"
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include "../shared/ansi_colors.h"
 #include "../shared/clstatushelper.h"
 
-#define DEBUG_PRINT 0
+#define PRINT_LOCAL_HISTOGRAMS 0
 
-OpenCLMgr *Histogram::OpenCLmgr = NULL;
+OpenCLMgr *Histogram::OpenCLmgr = nullptr;
 
 Histogram::Histogram(){
     OpenCLmgr = new OpenCLMgr();
@@ -23,32 +23,36 @@ Histogram::~Histogram(){
 
 
 void
-Histogram::loadFile(char* filepath, int channels){
+Histogram::loadFile(char* file_path, int channels){
     int width, height, bpp;
     unsigned char* rgb;
-    rgb = stbi_load( filepath, &width, &height, &bpp, 0 );
+    rgb = stbi_load( file_path, &width, &height, &bpp, 0 );
     // rgb is now three bytes per pixel, width*height size. Or NULL if load failed.
-    // Do something with it...
-
-    printf("Loading file:   %s\n", filepath);
-
-    printf("Image bpp:    %10i\n", bpp);
-    printf("Image Width:  %10i\n", width);
-    printf("Image Height: %10i\n", height);
+    printf("Loading file:   %s\n", file_path);
+    printf("Image BytesPerPixel: %10i\n", bpp);
+    printf("Image Width:         %10i\n", width);
+    printf("Image Height:        %10i\n", height);
 
     this->height    = height;
     this->width     = width;
+    this->bpp       = bpp;
 
-    if(rgb_data!=NULL){
+    if(bpp!=channels){
+        printf("ERROR: bpp and channels count does not match!");
+    }
+
+    if(rgb_data!=NULL) {
+        delete[] rgb_data;
+        rgb_data = nullptr;
+    }
+    if(hist!=NULL){
         delete [] hist;
-        delete [] rgb_data;
-        hist= NULL;
-        rgb_data=NULL;
+        hist= nullptr;
     }
 
     hist        = new cl_uint[256]();
-    rgb_data    = new unsigned char[width*height*3]();
-    memcpy(rgb_data, rgb, width*height*3);
+    rgb_data    = new unsigned char[width*height*channels]();
+    memcpy(rgb_data, rgb, width*height*channels);
 
     stbi_image_free( rgb );
     return;
@@ -129,7 +133,6 @@ Histogram::plotHistogram(){
 
 
 
-
 void
 Histogram::plotImageData(){
     printf("\n\n");
@@ -161,7 +164,7 @@ Histogram::calcHistCPU_Validate() {
         float r = (float)(rgb_data[i]);
         float g = (float)(rgb_data[i+1]);
         float b = (float)(rgb_data[i+2]);
-        float lum =
+//        float lum =
     }
 
 }
@@ -248,8 +251,8 @@ Histogram::calcHistGPU(){
                             (void *) &all_hist_buffer );
     check_error(status);
 
-    printf("Global Work Size: %12i\n", gws[0]);
-    printf("Local Work Size : %12i\n", lws[0]);
+    printf("Global Work Size: %12i\n", int(gws[0]));
+    printf("Local Work Size : %12i\n", int(lws[0]));
     printf("Work Groups     : %12i\n", workgroups);
 
 
@@ -264,30 +267,31 @@ Histogram::calcHistGPU(){
                                     NULL);
     check_error(status);
 
-    status = clEnqueueReadBuffer( OpenCLmgr->commandQueue,
-                                  all_hist_buffer,
-                                  CL_TRUE,
-                                  0,
-                                  workgroups*256*sizeof(uint),
-                                  local_histograms,
-                                  0,
-                                  NULL,
-                                  NULL);
-    check_error(status);
 
-    if(DEBUG_PRINT) {
+    if(PRINT_LOCAL_HISTOGRAMS){
+
+        status = clEnqueueReadBuffer( OpenCLmgr->commandQueue,
+                                      all_hist_buffer,
+                                      CL_TRUE,
+                                      0,
+                                      workgroups*256*sizeof(uint),
+                                      local_histograms,
+                                      0,
+                                      NULL,
+                                      NULL);
+        check_error(status);
+
         for (int i = 0; i < workgroups; ++i) {
             printf("LOCAL HISTOGRAM: %i\n", i);
             for (int j = 0; j < 256; ++j) {
-                printf("[%3i]: %12i; ", j, local_histograms[i * 256 + j]);
+                printf("[%3i]: %12i; ",j, local_histograms[i*256+j]);
 
-                if ((j + 1) % 10 == 0)
+                if((j+1)%10==0)
                     printf("\n");
             }
             printf("\n\n");
         }
     }
-
 
     // reduce
     status = clSetKernelArg(OpenCLmgr->kernels["reduceStatistic_kernel"],
@@ -329,9 +333,6 @@ Histogram::calcHistGPU(){
                                   NULL,
                                   NULL);
     check_error(status);
-
-
-
 
 
     clReleaseMemObject(rgb_buffer);

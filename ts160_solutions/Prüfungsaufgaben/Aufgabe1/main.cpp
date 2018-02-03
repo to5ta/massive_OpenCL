@@ -24,7 +24,7 @@ int main() {
 
 //    histo.loadFile("../stripes_bw.png", 3);
 //    histo.loadFile("../hist2parts.png", 3);
-    histo.calcHist();
+    histo.calcHistGPU();
 
     std::cout << ANSI_COLOR_BRIGHTGREEN << "Aufgabe 1 OK!" << ANSI_COLOR_RESET << std::endl;
     return 0;
