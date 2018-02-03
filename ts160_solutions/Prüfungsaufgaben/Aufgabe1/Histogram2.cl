@@ -1,6 +1,6 @@
 #define PIXEL_PER_WORKITEM 	64
 #define GROUP_SIZE 			32
-#define DEBUG_PRINT         1
+#define DEBUG_PRINT         0
 
 __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
                                 			int 		 	length,
@@ -12,7 +12,7 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
 
 
     if(gid==0 && DEBUG_PRINT)
-        printf("\n[\t---KERNEL INFO BEGIN---\t]\n");
+        printf("\n[\t---KERNEL 'calcStatistic_kernel' INFO BEGIN---\t]\n");
 
 
     // copy rgb_data to local memory to allow fast access
@@ -85,7 +85,7 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
         int sum=0;
         int binID = k*GROUP_SIZE + lid;
 
-        if(gid==31){
+        if(gid==31 && DEBUG_PRINT){
             printf("Bin: %i\n", binID);
         }
         // collect each result from other work items
@@ -100,10 +100,9 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
     }
 
     if(gid==0 && DEBUG_PRINT)
-        printf("[\t---KERNEL INFO END---\t]\n\n");
+        printf("[\t---KERNEL 'calcStatistic_kernel' INFO END---\t]\n\n");
 
     return;
-
 }
 
 
@@ -115,13 +114,13 @@ __kernel void reduceStatistic_kernel(__global  int     *local_histograms,
     int lid = get_local_id(0);
     int wid = get_group_id(0);
 
+    if(gid==0 && DEBUG_PRINT)
+        printf("\n[\t---KERNEL 'reduceStatistic_kernel' INFO BEGIN---\t]\n");
 
     if(gid==0 && DEBUG_PRINT){
         printf("groups:  %i\n", groups);
     }
 
-
-    //
     int step_size = 256/GROUP_SIZE;
     if(gid==0 && DEBUG_PRINT){
         printf("step_size %i\n", step_size );
@@ -138,28 +137,18 @@ __kernel void reduceStatistic_kernel(__global  int     *local_histograms,
         // iterate over all local histograms
         for (int l = 0; l < groups; l++) {
             if(gid==0 && DEBUG_PRINT){
-//                printf("hist %i, [%i]: %i\n", l, i*step_size +lid,  local_histograms[l*256 + i*step_size +lid] );
+                printf("hist %i, [%i]: %i\n", l, i*step_size +lid,  local_histograms[l*256 + i*step_size +lid] );
             }
             sum += local_histograms[l*256 + bin];
         }
 
-
-//        printf("Sum[%i] %i\n", i*step_size + lid, sum);
-
+        if(gid==0 && DEBUG_PRINT) {
+          printf("Sum[%i] %i\n", i*step_size + lid, sum);
+        }
         histogram[bin] = sum;
     }
+    if(gid==0 && DEBUG_PRINT)
+        printf("[\t---KERNEL 'reduceStatistic_kernel' INFO END---\t]\n\n");
+
+    return;
 }
-
-
-
-// NOTES:
-
-
-    // calculate luminance for 4 pixels successive TO AVOID BANK CONFLICTS
-
-    // BANK: 000 011 112 222|333 355 556 666| ...
-    // DATA: RGB RGB RGB RGB|RGB RGB RGB RGB| ...
-    // LID:         0       |       1       | ...
-
-
-

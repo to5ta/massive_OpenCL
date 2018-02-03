@@ -27,6 +27,7 @@ public:
 private:
     int height = 0;
     int width = 0;
+    int bpp = 0;
 
 };
 

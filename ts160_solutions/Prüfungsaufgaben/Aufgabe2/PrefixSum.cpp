@@ -271,7 +271,7 @@ void PrefixSum::prefixSumGPU() {
     }
 
     for (int level = 0; level < levels; level++) {
-        printf("Release Buffers for Level %i...\n", level);
+        printf("Release CL_Buffers for Level %i...\n", level);
         clReleaseMemObject(inputs[level]);
         clReleaseMemObject(prefix[level]);
     }
