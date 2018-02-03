@@ -14,7 +14,8 @@ public:
     static OpenCLMgr * OpenCLmgr;
 
     void loadFile(char* filepath, int channels);
-    void calcHist();
+    void calcHistGPU();
+    void calcHistCPU_Validate();
 
     void plotImageData();
     void plotHistogram();

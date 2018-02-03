@@ -4,6 +4,8 @@
 #include "../shared/ansi_colors.h"
 #include "../shared/clstatushelper.h"
 
+#define DEBUG_PRINT 0
+
 OpenCLMgr *Histogram::OpenCLmgr = NULL;
 
 Histogram::Histogram(){
@@ -60,6 +62,15 @@ Histogram::plotHistogram(){
         return;
     }
 
+    // find max
+
+    int max_bin = 0;
+    for (int l = 0; l < 256; ++l) {
+        if(hist[l]>max_bin){
+            max_bin = hist[l];
+        }
+    }
+
     uint total_count = 0;
 
     for (int j = 0; j < 256; ++j) {
@@ -89,7 +100,8 @@ Histogram::plotHistogram(){
 //            if(b==255)
 //                printf("%f\n", c);
 
-            float s = (float)(width*height);
+//            float s = (float)(width*height);
+            float s = (float)(max_bin);
             float percent = c/s *100.f;
             if(percent>(p*5)){
                 printf("#");
@@ -143,7 +155,20 @@ Histogram::plotImageData(){
 
 
 void
-Histogram::calcHist(){
+Histogram::calcHistCPU_Validate() {
+    int cpu_hist[256] = {0};
+    for (int i = 0; i < width*height*3; i+=3) {
+        float r = (float)(rgb_data[i]);
+        float g = (float)(rgb_data[i+1]);
+        float b = (float)(rgb_data[i+2]);
+        float lum =
+    }
+
+}
+
+
+void
+Histogram::calcHistGPU(){
     cl_int status=0;
 
     int buffersize = width*height*3;
@@ -250,16 +275,17 @@ Histogram::calcHist(){
                                   NULL);
     check_error(status);
 
+    if(DEBUG_PRINT) {
+        for (int i = 0; i < workgroups; ++i) {
+            printf("LOCAL HISTOGRAM: %i\n", i);
+            for (int j = 0; j < 256; ++j) {
+                printf("[%3i]: %12i; ", j, local_histograms[i * 256 + j]);
 
-    for (int i = 0; i < workgroups; ++i) {
-        printf("LOCAL HISTOGRAM: %i\n", i);
-        for (int j = 0; j < 256; ++j) {
-            printf("[%3i]: %12i; ",j, local_histograms[i*256+j]);
-
-            if((j+1)%10==0)
-                printf("\n");
+                if ((j + 1) % 10 == 0)
+                    printf("\n");
+            }
+            printf("\n\n");
         }
-        printf("\n\n");
     }
 
 
@@ -316,6 +342,8 @@ Histogram::calcHist(){
 
 //    plotImageData();
     plotHistogram();
+
+
 
 
 }
