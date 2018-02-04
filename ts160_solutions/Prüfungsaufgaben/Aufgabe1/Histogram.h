@@ -15,13 +15,16 @@ public:
 
     void loadFile(char* filepath, int channels);
     void calcHistGPU();
-    void calcHistCPU_Validate();
+    void calcHistCPU();
 
     void plotImageData();
-    void plotHistogram();
+    void plotHistogram(cl_uint * histo);
+    void plotHistogramTable(cl_uint * histo);
+
 
     unsigned char *rgb_data = NULL;
     cl_uint *hist = NULL;
+    cl_uint *hist_cpu = NULL;
     int datalength = 0;
 //    int reallength = 0;
 

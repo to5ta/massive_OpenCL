@@ -1,9 +1,14 @@
 #include <iostream>
 #include "../shared/ansi_colors.h"
+#include "time.h"
+
 
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "Histogram.h"
+
+
+
 
 
 int main() {
@@ -11,7 +16,8 @@ int main() {
     Histogram histo;
 
 //    histo.loadFile("colorful_image_small.jpg", 3);
-    histo.loadFile("../colorful_image_small.jpg", 3);
+//    histo.loadFile("../colorful_image_small.jpg", 3);
+//    histo.loadFile("../colorful_image_large.jpg", 3);
 //    histo.loadFile("../color_test_mini.jpg", 3);
 //    histo.loadFile("../color_test_mini.png", 3);
 
@@ -24,8 +30,48 @@ int main() {
 
 //    histo.loadFile("../stripes_bw.png", 3);
 //    histo.loadFile("../hist2parts.png", 3);
-    histo.calcHistGPU();
+    histo.loadFile("../parrot.jpeg", 3);
 
-    std::cout << ANSI_COLOR_BRIGHTGREEN << "Aufgabe 1 OK!" << ANSI_COLOR_RESET << std::endl;
+    long cpu_start = clock();
+    histo.calcHistCPU();
+    long cpu_end = clock();
+    printf("\nCPU Histogram\n");
+//    histo.plotHistogramTable(histo.hist_cpu);
+    histo.plotHistogram(histo.hist_cpu);
+
+    long gpu_start = clock();
+    histo.calcHistGPU();
+    long gpu_end = clock();
+    printf("\nGPU Histogram\n");
+//    histo.plotHistogramTable(histo.hist);
+    histo.plotHistogram(histo.hist);
+
+
+
+
+
+//
+//    if(histo.plotHistogram(0)==0){
+//        std::cout << "[" << ANSI_COLOR_BRIGHTGREEN << "OK" << ANSI_COLOR_RESET  << "]";
+//        std::cout << " Sum of Bins == Sum of Pixels" << std::endl;
+//    } else {
+//        std::cout << "[" << ANSI_COLOR_RED << "FAILED" << ANSI_COLOR_RESET  << "]";
+//        std::cout << " Sum of Bins != Sum of Pixels" << std::endl;
+//    }
+//
+
+    if(memcmp(histo.hist_cpu, histo.hist, 256*sizeof(cl_uint))==0){
+        std::cout << "[" << ANSI_COLOR_BRIGHTGREEN << "OK" << ANSI_COLOR_RESET  << "]";
+        std::cout << " Result of GPU == Result of CPU" << std::endl;
+
+        float gpu_dur = float(gpu_end-gpu_start)/1000.f;
+        float cpu_dur = float(cpu_end-cpu_start)/1000.f;
+        std::cout << "GPU Duration: " << gpu_dur << " s" << std::endl;
+        std::cout << "CPU Duration: " << cpu_dur << " s" << std::endl;
+
+    } else {
+        std::cout << "[" << ANSI_COLOR_RED << "FAILED" << ANSI_COLOR_RESET  << "]";
+        std::cout << " Result of GPU != Result of CPU" << std::endl;
+    }
     return 0;
 }
