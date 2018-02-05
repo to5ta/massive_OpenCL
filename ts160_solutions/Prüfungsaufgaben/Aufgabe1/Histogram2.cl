@@ -4,6 +4,7 @@
 
 #define PIXEL_PER_WORKITEM 	64
 #define GROUP_SIZE 			32
+
 #define DEBUG_PRINT          1
 #define PRINT_CONDITION wid>19 & lid==0
 
@@ -25,7 +26,6 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
     if(DEBUG_PRINT & PRINT_CONDITION){
         printf("WID: %i, LID: %i\n", wid, lid);
     }
-
 
     // copy rgb_data to local memory to allow fast access
     __local unsigned char rgb_local[PIXEL_PER_WORKITEM * GROUP_SIZE * 3];
@@ -80,7 +80,6 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
 //                printf("RGB %i %i %i =  Lum %i\n", r,g,b,luminance );
                 printf("workitems_histogram[%i + %i]: %i\n", (int)(luminance), lid*256, workitems_histogram[lid*256 + (int)(luminance)]);
             }
-
 
             // workitems_histogram[lid*256 + min(255, (uchar)(luminance))]++;
         }

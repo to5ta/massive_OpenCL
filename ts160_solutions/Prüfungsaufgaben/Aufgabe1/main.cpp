@@ -13,7 +13,7 @@
 
 int main() {
 
-    Histogram histo;
+    Histogram histo(64, 32);
 
 //    histo.loadFile("colorful_image_small.jpg", 3);
 //    histo.loadFile("../colorful_image_small.jpg", 3);
@@ -30,25 +30,30 @@ int main() {
 
 //    histo.loadFile("../stripes_bw.png", 3);
 //    histo.loadFile("../hist2parts.png", 3);
-    histo.loadFile("../parrot.jpeg", 3);
+//    histo.loadFile("../parrot.jpeg", 3);
+    histo.loadFile("../parrot_big.jpeg", 3);
+//    histo.loadFile("../parrot_medium.jpeg", 3);
 
-    long cpu_start = clock();
-    histo.calcHistCPU();
-    long cpu_end = clock();
-    printf("\nCPU Histogram\n");
-//    histo.plotHistogramTable(histo.hist_cpu);
-    histo.plotHistogram(histo.hist_cpu);
 
     long gpu_start = clock();
     histo.calcHistGPU();
     long gpu_end = clock();
     printf("\nGPU Histogram\n");
-//    histo.plotHistogramTable(histo.hist);
+    histo.plotHistogramTable(histo.hist);
     histo.plotHistogram(histo.hist);
+    histo.plotLocalHistograms(histo.local_histograms_gpu);
 
 
+    long cpu_start = clock();
+    histo.calcHistCPU();
+    long cpu_end = clock();
+    printf("\nCPU Histogram\n");
+    histo.plotHistogramTable(histo.hist_cpu);
+    histo.plotHistogram(histo.hist_cpu);
+    histo.plotLocalHistograms(histo.local_histograms_cpu);
 
 
+    histo.compareGPUvsCPU();
 
 //
 //    if(histo.plotHistogram(0)==0){
