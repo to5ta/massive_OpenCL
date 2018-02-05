@@ -17,7 +17,7 @@ public:
     void calcHistGPU();
     void calcHistCPU();
 
-    void plotImageData();
+    void plotImageData(int max_id);
     void plotHistogram(cl_uint * histo);
     void plotHistogramTable(cl_uint * histo);
     void plotLocalHistograms(cl_uint * local_histo);
@@ -30,7 +30,6 @@ public:
     cl_uint *hist_cpu = NULL;
     cl_uint *local_histograms_cpu = NULL;
     int datalength = 0;
-//    int reallength = 0;
 
 private:
     int height = 0;

@@ -3,8 +3,10 @@
 #include <vector>
 #include <assert.h>
 #include <cmath>
+#include <unistd.h>
 #include "../shared/ansi_colors.h"
 #include "../shared/clstatushelper.h"
+
 
 
 #define PRINT_LOCAL_HISTOGRAMS 1
@@ -18,7 +20,7 @@ Histogram::Histogram(int pixel_per_workitem,
     this->group_size          = group_size;
 
     OpenCLmgr = new OpenCLMgr();
-    OpenCLmgr->buildProgram("../Histogram2.cl");
+    OpenCLmgr->buildProgram("../Histogram3.cl");
     const char *kernel_names[] = {"calcStatistic_kernel", "reduceStatistic_kernel"};
     OpenCLmgr->createKernels(kernel_names, 2);
 }
@@ -83,6 +85,7 @@ Histogram::loadFile(char* file_path, int channels){
 
 
     buffersize = width*height*channels;
+    datalength = buffersize;
     printf("%-25s: %12i\n", "Buffersize (bytes)", buffersize);
 
 
@@ -101,8 +104,8 @@ Histogram::loadFile(char* file_path, int channels){
     printf("%-25s: %12i\n", "WORK GROUPS", workgroups);
     printf("%-25s: %12i\n", "GWS * Pixels per Group", workgroups*pixels_per_group);
 
-//    local_histograms_gpu = (uint*)(malloc(workgroups*256*sizeof(uint)));
-//    local_histograms_cpu = (uint*)(malloc(workgroups*256*sizeof(uint)));
+//    local_histograms_gpu = (cl_uint*)(malloc(workgroups*256*sizeof(cl_uint)));
+//    local_histograms_cpu = (cl_uint*)(malloc(workgroups*256*sizeof(cl_uint)));
 
     local_histograms_gpu = new cl_uint[workgroups*256]();
     local_histograms_cpu = new cl_uint[workgroups*256]();
@@ -146,7 +149,7 @@ Histogram::plotHistogram(cl_uint * histogram){
             max_bin = histogram[l];
         }
     }
-    uint total_count = 0;
+    cl_uint total_count = 0;
     printf("      ");
     for (int i = 0; i < 255; ++i) {
         printf("-");
@@ -187,10 +190,25 @@ Histogram::plotHistogram(cl_uint * histogram){
 
 
 void
-Histogram::plotImageData(){
-    printf("\n\n");
+Histogram::plotImageData(int max_id){
+    if(max_id!=0){
+        printf("%3i Elements: ",max_id);
+    } else {
+        printf("\n\n");
+    }
+
     for(int y=0; y<height; y++){
         for(int x=0; x<width; x++){
+
+            if(max_id>0 && max_id<=width*y+x){
+                printf("\n");
+                return;
+            }
+
+            if(max_id<0 && (width*height)-(width*y+x) > abs(max_id) ){
+                continue;
+            }
+
             for (int i = 0; i < 3; ++i) {
                 int val = rgb_data[x*3+y*3*width+i];
                 if(val>255){
@@ -205,8 +223,11 @@ Histogram::plotImageData(){
             }
             printf("  ");
         }
-        printf("\n");
+        if(max_id==0){
+                printf("\n");
+            }
     }
+    printf("\n");
 }
 
 
@@ -243,20 +264,33 @@ Histogram::plotLocalHistograms(cl_uint * local_histo){
 void
 Histogram::compareGPUvsCPU(){
     for (int i = 0; i < workgroups; ++i) {
-        int compare_res = memcmp(local_histograms_cpu+(i*256), local_histograms_gpu+(i*256), 256*sizeof(cl_uint));
-//        int compare_res = memcmp(local_histograms_cpu, local_histograms_gpu, 256*sizeof(uint));
+        int compare_res = memcmp(local_histograms_cpu+(i*256*sizeof(cl_uint)),
+                                 local_histograms_gpu+(i*256*sizeof(cl_uint)),
+                                 256*sizeof(cl_uint));
+//        int compare_res = memcmp(local_histograms_cpu, local_histograms_gpu, 256*sizeof(cl_uint));
         if(compare_res==0){
             printf(ANSI_COLOR_BRIGHTGREEN);
             printf(ANSI_BOLD);
             printf("Local Histogram %3i OK!\n", i);
             printf(ANSI_COLOR_RESET);
-        } else{
-            printf(ANSI_COLOR_RED);
-            printf("Local Histogram %3i differs from CPU at %i:    ", i, compare_res/4);
-            printf("CPU: %i, ", local_histograms_cpu[compare_res/4]);
-            printf("GPU: %i\n", local_histograms_gpu[compare_res/4]);
-
+        } else {
+            int  _diff = 0;
+            for (int j = 0; j < 256; ++j) {
+                if(local_histograms_cpu[i*256+j] != local_histograms_gpu[i*256+j]){
+                    printf(ANSI_COLOR_RED);
+                    printf("Local Histogram %3i differs from CPU at %i:    ", i, j);
+                    printf("CPU: %i, ", local_histograms_cpu[i*256+j]);
+                    printf("GPU: %i\n", local_histograms_gpu[i*256+j]);
+                    _diff++;
+                    break;
+                }
+            }
             printf(ANSI_COLOR_RESET);
+
+            if(_diff==0)
+                printf("Local Histogram %3i OK? MEMCMP!=0 but no difference detected!\n", i);
+
+
         }
     }
 }
@@ -286,13 +320,13 @@ Histogram::calcHistGPU(){
 
     cl_mem all_hist_buffer = clCreateBuffer(OpenCLmgr->context,
                                         CL_MEM_READ_WRITE,
-                                        workgroups*256*sizeof(uint),
+                                        workgroups*256*sizeof(cl_uint),
                                         nullptr,
                                         nullptr);
 
     cl_mem hist_buffer = clCreateBuffer(OpenCLmgr->context,
                                         CL_MEM_READ_WRITE,
-                                        256*sizeof(uint),
+                                        256*sizeof(cl_uint),
                                         nullptr,
                                         nullptr);
 
@@ -300,13 +334,12 @@ Histogram::calcHistGPU(){
                                   all_hist_buffer,
                                   CL_TRUE,
                                   0,
-                                  workgroups*256*sizeof(uint),
+                                  workgroups*256*sizeof(cl_uint),
                                   local_histograms_gpu,
                                   0,
                                   nullptr,
                                   nullptr);
     check_error(status);
-
 
 
     status = clSetKernelArg(OpenCLmgr->kernels["calcStatistic_kernel"],
@@ -317,7 +350,7 @@ Histogram::calcHistGPU(){
 
     status = clSetKernelArg(OpenCLmgr->kernels["calcStatistic_kernel"],
                             1,
-                            sizeof(int),
+                            sizeof(uint),
                             (void *) &buffersize );
     check_error(status);
 
@@ -339,12 +372,11 @@ Histogram::calcHistGPU(){
     check_error(status);
 
 
-//    if(PRINT_LOCAL_HISTOGRAMS){
     status = clEnqueueReadBuffer( OpenCLmgr->commandQueue,
                                   all_hist_buffer,
                                   CL_TRUE,
                                   0,
-                                  workgroups*256*sizeof(uint),
+                                  workgroups*256*sizeof(cl_uint),
                                   local_histograms_gpu,
                                   0,
                                   nullptr,

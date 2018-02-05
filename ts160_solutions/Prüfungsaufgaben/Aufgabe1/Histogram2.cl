@@ -6,18 +6,19 @@
 #define GROUP_SIZE 			32
 
 #define DEBUG_PRINT          1
-#define PRINT_CONDITION wid>19 & lid==0
+#define PRINT_CONDITION gid==0
+//#define PRINT_CONDITION wid>19 & lid==0
 
-
+// uncomment to use global memory
+//#define PIXELS_LOCAL
 
 __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
                                 			int 		 	length,
-                                __global 	unsigned int	*local_histograms){
+                                   __global unsigned int	*local_histograms){
 
     int gid = get_global_id(0);
     int lid = get_local_id(0);
     int wid = get_group_id(0);
-
 
     if(gid==0 & DEBUG_PRINT & PRINT_CONDITION) {
         printf("\n[\t---KERNEL 'calcStatistic_kernel' INFO BEGIN---\t]\n");
@@ -25,24 +26,29 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
 
     if(DEBUG_PRINT & PRINT_CONDITION){
         printf("WID: %i, LID: %i\n", wid, lid);
+        printf("Length: %i\n", length);
     }
 
     // copy rgb_data to local memory to allow fast access
-    __local unsigned char rgb_local[PIXEL_PER_WORKITEM * GROUP_SIZE * 3];
-
-    for (int i = 0; i < PIXEL_PER_WORKITEM; i++)
-    {
-        // aka start-copy-index
-        int _localID            = (lid+i*GROUP_SIZE) * 3;
-        int _globalID           = (lid+i*GROUP_SIZE + wid*PIXEL_PER_WORKITEM*GROUP_SIZE) * 3;
-
-        if(_globalID<length){
-            rgb_local[_localID]     = rgb_global[_globalID];
-            rgb_local[_localID+1]   = rgb_global[_globalID+1];
-            rgb_local[_localID+2]   = rgb_global[_globalID+2];
-        }
+#ifdef PIXELS_LOCAL
+    if(gid==0 & DEBUG_PRINT){
+        printf("Using local memory for fast pixel access..\n");
     }
-    barrier(CLK_LOCAL_MEM_FENCE);
+        __local unsigned char rgb_local[PIXEL_PER_WORKITEM * GROUP_SIZE * 3];
+
+        for (int i = 0; i < PIXEL_PER_WORKITEM; i++) {
+            // aka start-copy-index
+            int _localID = (lid + i * GROUP_SIZE) * 3;
+            int _globalID = (lid + i * GROUP_SIZE + wid * PIXEL_PER_WORKITEM * GROUP_SIZE) * 3;
+
+            if (_globalID < length) {
+                rgb_local[_localID] = rgb_global[_globalID];
+                rgb_local[_localID + 1] = rgb_global[_globalID + 1];
+                rgb_local[_localID + 2] = rgb_global[_globalID + 2];
+            }
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+#endif
 
 
 //    int _i = min( PIXEL_PER_WORKITEM*32*3-3, length-3);
@@ -66,20 +72,39 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
 //            uchar r = rgb_local[_localID];
 //            uchar g = rgb_local[_localID+1];
 //            uchar b = rgb_local[_localID+2];
+#ifdef PIXELS_LOCAL
+            if(i==0 & gid==0 & DEBUG_PRINT){
+                printf("Access pixels in local memory..\n");
+            }
+            float r = (float) (rgb_local[_localID]);
+            float g = (float) (rgb_local[_localID + 1]);
+            float b = (float) (rgb_local[_localID + 2]);
 
-            float r = (float)(rgb_local[_localID]);
-            float g = (float)(rgb_local[_localID+1]);
-            float b = (float)(rgb_local[_localID+2]);
+#else
+            if(i==0 & gid==0 & DEBUG_PRINT){
+                printf("Access pixels in global memory..\n");
+            }
+            float r = (float) (rgb_global[_globalID]);
+            float g = (float) (rgb_global[_globalID + 1]);
+            float b = (float) (rgb_global[_globalID + 2]);
+#endif
+
             // dirty clamp
             float luminance = (0.2126*r + 0.7152*g + 0.0722*b);
 //            int luminance = min(255, (int)(0.2126*r + 0.7152*g + 0.0722*b));
 
+            if(luminance>255.f){
+                printf("ERROR: LUM: %f, gid: %i, wid: %i", luminance, gid, wid);
+            }
+
+//            atomic_add( (int*)(workitems_histogram[lid*256 + (int)(luminance)]), 1);
+
             workitems_histogram[lid*256 + (int)(luminance)]++;
 
-            if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
+//            if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
 //                printf("RGB %i %i %i =  Lum %i\n", r,g,b,luminance );
-                printf("workitems_histogram[%i + %i]: %i\n", (int)(luminance), lid*256, workitems_histogram[lid*256 + (int)(luminance)]);
-            }
+//                printf("workitems_histogram[%i + %i]: %i\n", (int)(luminance), lid*256, workitems_histogram[lid*256 + (int)(luminance)]);
+//            }
 
             // workitems_histogram[lid*256 + min(255, (uchar)(luminance))]++;
         }
@@ -90,16 +115,19 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
     // summize workgroup-internal histograms & copy to buffer
     int step_size = 256 / GROUP_SIZE;  // 256%GROUP_SIZE MUST BE ZERO!
 
-    if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
-        printf("stepsize: %i\n", step_size);
-    }
+//    if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
+//        printf("stepsize: %i\n", step_size);
+//    }
+
+    int histo_sum = 0;
+
     for (int k = 0; k < step_size; k++) {
         int sum=0;
         int binID = k*GROUP_SIZE + lid;
 
-        if(gid==31 & DEBUG_PRINT & PRINT_CONDITION){
-            printf("Bin: %i\n", binID);
-        }
+//        if(gid==31 & DEBUG_PRINT & PRINT_CONDITION){
+//            printf("Bin: %i\n", binID);
+//        }
         // collect each result from other work items
         for (int i = 0; i < GROUP_SIZE; ++i) {
             //                         nextHistogram + current step_offset + local offset
@@ -108,7 +136,12 @@ __kernel void calcStatistic_kernel(__global	unsigned char 	*rgb_global,
         barrier(CLK_LOCAL_MEM_FENCE);
 
         local_histograms[wid*256 + lid+k*32] = sum;
+
         barrier(CLK_LOCAL_MEM_FENCE);
+        histo_sum += sum;
+    }
+    if(histo_sum!=GROUP_SIZE*PIXEL_PER_WORKITEM & lid==0){
+        printf("Histogram Sum: %i WID: %i\n", histo_sum, wid);
     }
 
     if(gid==0 & DEBUG_PRINT & PRINT_CONDITION)
@@ -141,22 +174,22 @@ __kernel void reduceStatistic_kernel(__global  int     *local_histograms,
 
         int bin = i*GROUP_SIZE + lid;
 
-        if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
-            printf("Bin %i\n", bin);
-        }
+//        if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
+//            printf("Bin %i\n", bin);
+//        }
 
         uint sum = 0;
         // iterate over all local histograms
         for (int l = 0; l < groups; l++) {
-            if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
-                printf("hist %i, [%i]: %i\n", l, i*step_size +lid,  local_histograms[l*256 + i*step_size +lid] );
-            }
+//            if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
+//                printf("hist %i, [%i]: %i\n", l, i*step_size +lid,  local_histograms[l*256 + i*step_size +lid] );
+//            }
             sum += local_histograms[l*256 + bin];
         }
 
-        if(gid==0 & DEBUG_PRINT & PRINT_CONDITION) {
-          printf("Sum[%i] %i\n", i*step_size + lid, sum);
-        }
+//        if(gid==0 & DEBUG_PRINT & PRINT_CONDITION) {
+//          printf("Sum[%i] %i\n", i*step_size + lid, sum);
+//        }
         histogram[bin] = sum;
     }
     if(gid==0 & DEBUG_PRINT & PRINT_CONDITION)
