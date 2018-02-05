@@ -9,16 +9,14 @@
 
 
 
-
-
 int main() {
 
     Histogram histo(64, 32);
 
 //    histo.loadFile("colorful_image_small.jpg", 3);
 //    histo.loadFile("../colorful_image_small.jpg", 3);
-//    histo.loadFile("../colorful_image_large.jpg", 3);
-//    histo.loadFile("../color_test_mini.jpg", 3);
+    histo.loadFile("../colorful_image_large.jpg", 3);
+//    histo.loadFile("../color  _test_mini.jpg", 3);
 //    histo.loadFile("../color_test_mini.png", 3);
 
 //    histo.loadFile("../gradient_bw.png", 3);
@@ -30,7 +28,7 @@ int main() {
 //    histo.loadFile("../hist2parts.png", 3);
 //    histo.loadFile("../parrot.jpeg", 3);
 //    histo.loadFile("../parrot_big.jpeg", 3);
-    histo.loadFile("../parrot_medium.jpeg", 3);
+//    histo.loadFile("../parrot_medium.jpeg", 3);
 //    histo.loadFile("../parrot_medium2.jpeg", 3);
 
 
@@ -39,7 +37,7 @@ int main() {
     long gpu_end = clock();
     printf("\nGPU Histogram\n");
 //    histo.plotHistogramTable(histo.hist);
-//    histo.plotHistogram(histo.hist);
+    histo.plotHistogram(histo.hist);
 //    histo.plotLocalHistograms(histo.local_histograms_gpu);
 
 
@@ -48,7 +46,7 @@ int main() {
     long cpu_end = clock();
     printf("\nCPU Histogram\n");
 //    histo.plotHistogramTable(histo.hist_cpu);
-//    histo.plotHistogram(histo.hist_cpu);
+    histo.plotHistogram(histo.hist_cpu);
 //    histo.plotLocalHistograms(histo.local_histograms_cpu);
 
 

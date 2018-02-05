@@ -104,6 +104,15 @@ Histogram::loadFile(char* file_path, int channels){
     printf("%-25s: %12i\n", "WORK GROUPS", workgroups);
     printf("%-25s: %12i\n", "GWS * Pixels per Group", workgroups*pixels_per_group);
 
+    // CL_DEVICE_MAX_WORK_GROUP_SIZE
+    if(workgroups>1024){
+        printf(ANSI_BOLD);
+        printf(ANSI_COLOR_RED);
+        printf("ERROR: GROUP SIZE < 1024 (HARDWARE MAX)!");
+        printf(ANSI_COLOR_RESET);
+        exit(0);
+    }
+
 //    local_histograms_gpu = (cl_uint*)(malloc(workgroups*256*sizeof(cl_uint)));
 //    local_histograms_cpu = (cl_uint*)(malloc(workgroups*256*sizeof(cl_uint)));
 

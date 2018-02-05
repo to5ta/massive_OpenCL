@@ -30,9 +30,13 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
     }
 
 
-    // create histogram for each workitem
-    __local unsigned int  workitems_histogram[GROUP_SIZE][256];
+    // create histogram for each workitem AKA "counts[32][256]"
+//    __local uint volatile workitems_histogram[GROUP_SIZE][256];
+    __local uint volatile workitems_histogram[256][GROUP_SIZE];
 
+    for(int i=0; i<256; i++){
+        workitems_histogram[i][lid]=0;
+    }
 
     // calc histogram per workitem, grab every 32th pixel
     for (int i = 0; i < PIXEL_PER_WORKITEM; i++) {
@@ -50,29 +54,56 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
         float b         = (float) ( rgba_global[_globalID+2] );
         float luminance = (0.2126*r + 0.7152*g + 0.0722*b);
 
-        workitems_histogram[lid][(int)(luminance)]++;
+        atomic_inc( &workitems_histogram[(int)(luminance)][lid] );
+//        atomic_inc( &workitems_histogram[lid][(int)(luminance)] );
+//      workitems_histogram[lid][(int)(luminance)]++;
+        barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+
     }
+
 
 
     // each of the 32 workers within this group shall summize 8 times the histogram bins
     // summize workgroup-internal histograms & copy to buffer
-    int step_size = 256 / GROUP_SIZE;  // 256%GROUP_SIZE MUST BE ZERO!
+//    int step_size = 256 / GROUP_SIZE;  // 256%GROUP_SIZE MUST BE ZERO!
+//
+//    for (int k = 0; k < step_size; k++) {
+//        int sum=0;
+//        int binID = k*GROUP_SIZE + lid;
+//
+//        // collect each result from other work items
+//        for (int i = 0; i < GROUP_SIZE; ++i) {
+//            //                         nextHistogram + current step_offset + local offset
+////            sum += workitems_histogram[i][binID];
+//            sum += workitems_histogram[binID][i];
+//        }
+//
+//barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+//
+//        local_histograms[wid*256 + lid+k*32] = sum;
+//
+//    }
 
-    for (int k = 0; k < step_size; k++) {
-        int sum=0;
-        int binID = k*GROUP_SIZE + lid;
 
-        // collect each result from other work items
-        for (int i = 0; i < GROUP_SIZE; ++i) {
-            //                         nextHistogram + current step_offset + local offset
-            sum += workitems_histogram[i][binID];
+/// Alternative summing
+    if(lid==0){
+        for (int b = 0; b < 256; b++) {
+
+            int sum=0;
+
+            // collect each result from other work items
+            for (int i = 0; i < GROUP_SIZE; ++i) {
+                sum += workitems_histogram[b][i];
+            }
+
+            local_histograms[wid*256 + b] = sum;
+            barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
         }
-        barrier(CLK_LOCAL_MEM_FENCE);
-
-        local_histograms[wid*256 + lid+k*32] = sum;
-
-        barrier(CLK_LOCAL_MEM_FENCE);
     }
+
+
+
+
 
 
     if(gid==0 & DEBUG_PRINT & PRINT_CONDITION)
