@@ -8,22 +8,30 @@
 #include "../shared/clstatushelper.h"
 
 
-
-#define PRINT_LOCAL_HISTOGRAMS 1
-
 OpenCLMgr *Histogram::OpenCLmgr = nullptr;
 
 Histogram::Histogram(int pixel_per_workitem,
-                     int group_size){
+                     int group_size,
+                     int out_of_order){
 
     this->pixels_per_workitem = pixel_per_workitem;
     this->group_size          = group_size;
 
-    OpenCLmgr = new OpenCLMgr();
-    OpenCLmgr->buildProgram("../Histogram3.cl");
+    if(out_of_order){
+        printf("Out-of-Order OpenCL Command Queue!\n");
+        OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE );
+    } else {
+        OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE );
+    }
+
+    OpenCLmgr->setVariable("DEBUG_PRINT", "1");
+
+    OpenCLmgr->loadFile("../Histogram3.cl");
+    OpenCLmgr->buildProgram();
     const char *kernel_names[] = {"calcStatistic_kernel", "reduceStatistic_kernel"};
     OpenCLmgr->createKernels(kernel_names, 2);
 }
+
 
 
 Histogram::~Histogram(){
@@ -414,6 +422,147 @@ Histogram::calcHistGPU(){
                                     lws,
                                     0,
                                     nullptr,
+                                    nullptr);
+    check_error(status);
+
+    status = clEnqueueReadBuffer( OpenCLmgr->commandQueue,
+                                  hist_buffer,
+                                  CL_TRUE,
+                                  0,
+                                  256*sizeof(int),
+                                  this->hist,
+                                  0,
+                                  nullptr,
+                                  nullptr);
+    check_error(status);
+
+    clReleaseMemObject(rgb_buffer);
+    clReleaseMemObject(hist_buffer);
+    clReleaseMemObject(all_hist_buffer);
+
+}
+
+
+
+
+void
+Histogram::calcHistGPUwithEvents(){
+    cl_int status=0;
+
+    cl_mem rgb_buffer = clCreateBuffer(OpenCLmgr->context,
+                                       CL_MEM_READ_ONLY,
+                                       buffersize*sizeof(u_char),
+                                       nullptr,
+                                       nullptr);
+
+    status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue,
+                                  rgb_buffer,
+                                  CL_TRUE,
+                                  0,
+                                  buffersize*sizeof(u_char),
+                                  rgb_data,
+                                  0,
+                                  nullptr,
+                                  nullptr);
+    check_error(status);
+
+    cl_mem all_hist_buffer = clCreateBuffer(OpenCLmgr->context,
+                                        CL_MEM_READ_WRITE,
+                                        workgroups*256*sizeof(cl_uint),
+                                        nullptr,
+                                        nullptr);
+
+    cl_mem hist_buffer = clCreateBuffer(OpenCLmgr->context,
+                                        CL_MEM_READ_WRITE,
+                                        256*sizeof(cl_uint),
+                                        nullptr,
+                                        nullptr);
+
+    status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue,
+                                  all_hist_buffer,
+                                  CL_TRUE,
+                                  0,
+                                  workgroups*256*sizeof(cl_uint),
+                                  local_histograms_gpu,
+                                  0,
+                                  nullptr,
+                                  nullptr);
+    check_error(status);
+
+    status = clSetKernelArg(OpenCLmgr->kernels["calcStatistic_kernel"],
+                            0,
+                            sizeof(cl_mem),
+                            (void *) &rgb_buffer );
+    check_error(status);
+
+    status = clSetKernelArg(OpenCLmgr->kernels["calcStatistic_kernel"],
+                            1,
+                            sizeof(uint),
+                            (void *) &buffersize );
+    check_error(status);
+
+    status = clSetKernelArg(OpenCLmgr->kernels["calcStatistic_kernel"],
+                            2,
+                            sizeof(cl_mem),
+                            (void *) &all_hist_buffer );
+    check_error(status);
+
+
+    // create events
+    cl_event calcStaticEvent;
+
+    status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue,
+                                    OpenCLmgr->kernels["calcStatistic_kernel"],
+                                    1,
+                                    nullptr,
+                                    gws,
+                                    lws,
+                                    0,
+                                    nullptr,
+                                    &calcStaticEvent);
+    check_error(status);
+
+
+    // rather for debugging
+    status = clEnqueueReadBuffer( OpenCLmgr->commandQueue,
+                                  all_hist_buffer,
+                                  CL_TRUE,
+                                  0,
+                                  workgroups*256*sizeof(cl_uint),
+                                  local_histograms_gpu,
+                                  0,
+                                  nullptr,
+                                  nullptr);
+    check_error(status);
+
+
+    // reduce
+    status = clSetKernelArg(OpenCLmgr->kernels["reduceStatistic_kernel"],
+                            0,
+                            sizeof(cl_mem),
+                            (void *) &all_hist_buffer );
+    check_error(status);
+
+    status = clSetKernelArg(OpenCLmgr->kernels["reduceStatistic_kernel"],
+                            1,
+                            sizeof(int),
+                            (void *) &workgroups );
+    check_error(status);
+
+    status = clSetKernelArg(OpenCLmgr->kernels["reduceStatistic_kernel"],
+                            2,
+                            sizeof(cl_mem),
+                            (void *) &hist_buffer );
+    check_error(status);
+
+    status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue,
+                                    OpenCLmgr->kernels["reduceStatistic_kernel"],
+                                    1,
+                                    nullptr,
+                                    lws,
+                                    lws,
+                                    0,
+                                    &calcStaticEvent,
                                     nullptr);
     check_error(status);
 

@@ -8,13 +8,17 @@ class Histogram {
 
 public:
 
-    Histogram(int pixels_per_workitem, int group_size);
+    Histogram(int pixels_per_workitem,
+              int group_size,
+              int out_of_order);
+
     ~Histogram();
 
     static OpenCLMgr * OpenCLmgr;
 
     void loadFile(char* filepath, int channels);
     void calcHistGPU();
+    void calcHistGPUwithEvents();
     void calcHistCPU();
 
     void plotImageData(int max_id);

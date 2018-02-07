@@ -1,9 +1,9 @@
 #pragma once
 
 #include <CL/cl.h>
-#include <string>
+#include <string.h>
 #include <iostream>
-#include <string>
+#include <string.h>
 #include <map>
 #include "OpenCLMgr.h"
 
@@ -20,19 +20,27 @@
 class OpenCLMgr
 {
 public:
-	OpenCLMgr();
+	OpenCLMgr(cl_command_queue_properties queue_flags);
 	~OpenCLMgr();
 
-    cl_int createContext();
-	cl_int buildProgram(const char* filepath);
+    cl_int createContext(cl_command_queue_properties queue_flags);
+	cl_int buildProgram();
     cl_int createKernels(const char* kernelnames[], cl_uint count);
+
+    cl_int loadFile(const char* filepath);
+
+    cl_int setVariable(const char* DEF_NAME,
+                       const char* value);
+
 
 	int isValid() {return valid;}
 
-	
 	cl_context 			context;
 	cl_command_queue 	commandQueue;
 	cl_program 			program;
+
+    std::string sourceStr;
+    const char *source;
 
 	std::map<const char*, cl_kernel> kernels;
 
@@ -49,6 +57,6 @@ public:
 private:
 	static int convertToString(const char *filename, std::string& s);
 
-	int init();
+	int init(cl_command_queue_properties queue_flags);
 	int valid;
 };

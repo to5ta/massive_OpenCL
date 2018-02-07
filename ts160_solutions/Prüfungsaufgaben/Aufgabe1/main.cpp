@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include "../shared/ansi_colors.h"
 #include "time.h"
@@ -9,23 +10,58 @@
 
 int main(int argc, char* argv[]) {
 
+    // args to parse
+    char*   filename = NULL;
+    int     out_of_order            = 0;
+    int     pixels_per_workitem     = 256;
+    int     groupsize               = 32;
+
+    int options;
+
+    while ((options = getopt (argc, argv, "of:p:g:")) != -1) {
+        switch (options) {
+            case 'o':
+                out_of_order = 1;
+                break;
+            case 'f':
+                filename = optarg;
+                break;
+            case 'p':
+                pixels_per_workitem = atoi(optarg);
+                break;
+
+            case '?':
+                if (optopt == 'c')
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                else if (isprint(optopt))
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                else
+                    fprintf(stderr,
+                            "Unknown option character `\\x%x'.\n",
+                            optopt);
+                return 1;
+            default:
+                abort();
+        }
+    }
+
+    printf("filename:            %s\n", filename);
+    printf("out_of_order:        %i\n", out_of_order);
+    printf("pixels_per_workitem: %i\n", pixels_per_workitem);
+    printf("groupsize:           %i\n", groupsize);
+
+
     clock_t t;
-    Histogram histo(256, 32);
 
-//    int i=0;
-//    while(argv[i]!=NULL){
-//        printf("\n %s is argv %d ",argv[i],i);
-//        i++;
-//    }
-//
-//    exit(0);
+    Histogram histo(pixels_per_workitem, groupsize, out_of_order);
 
-    if(argc>1){
-        if( access( argv[1], F_OK ) != -1 ) {
-            histo.loadFile(argv[1], 3);
+
+    if(filename!=NULL){
+        if( access( filename, F_OK ) != -1 ) {
+            histo.loadFile(filename, 3);
         } else {
             std::cout << "[" << ANSI_COLOR_RED << "FAILED" << ANSI_COLOR_RESET  << "]";
-            std::cout << argv[1] << " does not exist!" << std::endl;
+            std::cout << filename << " does not exist!" << std::endl;
         }
     }
     else {

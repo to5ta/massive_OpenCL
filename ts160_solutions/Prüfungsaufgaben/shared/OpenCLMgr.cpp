@@ -10,12 +10,12 @@
 using namespace std;
 
 
-OpenCLMgr::OpenCLMgr() {
+OpenCLMgr::OpenCLMgr(cl_command_queue_properties queue_flags) {
     context = 0;
     commandQueue = 0;
     program = 0;
 
-    valid = (init() == SUCCESS);
+    valid = (init(queue_flags) == SUCCESS);
 }
 
 
@@ -35,6 +35,17 @@ OpenCLMgr::~OpenCLMgr() {
     //Release context.
     if (context) status = clReleaseContext(context);
 }
+
+
+
+cl_int
+OpenCLMgr::setVariable(const char* DEF_NAME,
+                       const char* value){
+
+
+}
+
+
 
 
 /* convert the kernel file into a string */
@@ -66,15 +77,15 @@ int OpenCLMgr::convertToString(const char *filename, std::string &s) {
 }
 
 
-cl_int OpenCLMgr::init() {
+cl_int OpenCLMgr::init(cl_command_queue_properties queue_flags) {
     cl_int status;
-    status = createContext();
+    status = createContext(queue_flags);
     check_error(status);
     return status;
 }
 
 
-cl_int OpenCLMgr::createContext() {
+cl_int OpenCLMgr::createContext(cl_command_queue_properties queue_flags) {
     deviceNo = 1;
 
     // Getting platforms and choose an available one.
@@ -177,8 +188,9 @@ cl_int OpenCLMgr::createContext() {
 //	cout << "PlatformInfo: "<< platforminfo << endl;
 
     // Creating command queue associate with the context
+
 //	commandQueue = clCreateCommandQueue(context, devices[deviceNo], CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &status);
-    commandQueue = clCreateCommandQueue(context, devices[deviceNo], CL_QUEUE_PROFILING_ENABLE, &status);
+    commandQueue = clCreateCommandQueue(context, devices[deviceNo], queue_flags, &status);
 //    clCreateCommandQueueWithProperties(context, devices[deviceNo], )
     CHECK_SUCCESS("Error: creating command queue")
 
@@ -188,16 +200,26 @@ cl_int OpenCLMgr::createContext() {
 }
 
 
-cl_int OpenCLMgr::buildProgram(const char *filepath) {
 
+
+cl_int OpenCLMgr::loadFile(const char *filepath) {
     cl_int status;
 
 //	const char *filepath = "../Matrix_Kernel.cl";
-    string sourceStr;
+
     status = convertToString(filepath, sourceStr);
     CHECK_SUCCESS("Error: loading OpenCL file")
 
-    const char *source = sourceStr.c_str();
+    source = sourceStr.c_str();
+
+    return SUCCESS;
+}
+
+
+
+cl_int OpenCLMgr::buildProgram() {
+
+    cl_int status;
     size_t sourceSize[] = {strlen(source)};
 
     program = clCreateProgramWithSource(context, 1, &source, sourceSize, &status);
