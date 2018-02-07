@@ -40,6 +40,7 @@ private:
     int height = 0;
     int width = 0;
     int bytes_per_pixel = 0;
+    int out_of_order=0;
 
     int buffersize;
     int pixels_per_workitem;

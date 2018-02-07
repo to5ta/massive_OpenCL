@@ -18,6 +18,8 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
     if(gid==0 & DEBUG_PRINT) {
         printf("\n[\t---KERNEL 'calcStatistic_kernel' INFO BEGIN---\t]\n");
         printf("PIXEL_PER_WORKITEM: %i\n", PIXEL_PER_WORKITEM);
+        printf("GROUP_SIZE        : %i\n", GROUP_SIZE);
+        printf("GROUP_ATOMIC_ADD  : %i\n", GROUP_ATOMIC_ADD);
     }
 
 

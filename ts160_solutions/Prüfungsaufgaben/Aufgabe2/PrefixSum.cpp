@@ -13,8 +13,9 @@ OpenCLMgr *PrefixSum::OpenCLmgr = NULL;
 
 
 PrefixSum::PrefixSum() {
-    OpenCLmgr = new OpenCLMgr();
-    OpenCLmgr->buildProgram("../prefixSum.cl");
+    OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE );
+    OpenCLmgr->loadFile("../prefixSum.cl");
+    OpenCLmgr->buildProgram();
     const char *kernel_names[] = {"addBlockSumToPrefix_kernel", "calcBlockSum_kernel", "prefixBlockwise_kernel"};
     OpenCLmgr->createKernels(kernel_names, 3);
 

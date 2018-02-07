@@ -17,9 +17,13 @@ Histogram::Histogram(int pixel_per_workitem,
 
     this->pixels_per_workitem = pixel_per_workitem;
     this->group_size          = group_size;
+    this->out_of_order = out_of_order;
 
     if(out_of_order){
+        printf(ANSI_COLOR_YELLOW);
+        printf(ANSI_BOLD);
         printf("Out-of-Order OpenCL Command Queue!\n");
+        printf(ANSI_COLOR_RESET);
         OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE );
     } else {
         OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE );
@@ -27,7 +31,7 @@ Histogram::Histogram(int pixel_per_workitem,
 
 
     OpenCLmgr->loadFile("../Histogram3.cl");
-    OpenCLmgr->setVariable("DEBUG_PRINT", 1);
+//    OpenCLmgr->setVariable("DEBUG_PRINT", 1);
     OpenCLmgr->setVariable("PIXEL_PER_WORKITEM", pixel_per_workitem);
     OpenCLmgr->setVariable("GROUP_ATOMIC_ADD", atomic_add);
 
@@ -316,6 +320,11 @@ void
 Histogram::calcHistGPU(){
     cl_int status=0;
 
+    if(out_of_order){
+        calcHistGPUwithEvents();
+        return;
+    }
+
     cl_mem rgb_buffer = clCreateBuffer(OpenCLmgr->context,
                                        CL_MEM_READ_ONLY,
                                        buffersize*sizeof(u_char),
@@ -514,7 +523,7 @@ Histogram::calcHistGPUwithEvents(){
 
 
     // create events
-    cl_event calcStaticEvent;
+    cl_event calcStatisticEvent, reduceStatisticEvent;
 
     status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue,
                                     OpenCLmgr->kernels["calcStatistic_kernel"],
@@ -524,8 +533,10 @@ Histogram::calcHistGPUwithEvents(){
                                     lws,
                                     0,
                                     nullptr,
-                                    &calcStaticEvent);
+                                    &calcStatisticEvent);
     check_error(status);
+
+
 
 
     // rather for debugging
@@ -535,8 +546,8 @@ Histogram::calcHistGPUwithEvents(){
                                   0,
                                   workgroups*256*sizeof(cl_uint),
                                   local_histograms_gpu,
-                                  0,
-                                  nullptr,
+                                  1,
+                                  &calcStatisticEvent,
                                   nullptr);
     check_error(status);
 
@@ -566,9 +577,9 @@ Histogram::calcHistGPUwithEvents(){
                                     nullptr,
                                     lws,
                                     lws,
-                                    0,
-                                    &calcStaticEvent,
-                                    nullptr);
+                                    1,
+                                    &calcStatisticEvent,
+                                    &reduceStatisticEvent);
     check_error(status);
 
     status = clEnqueueReadBuffer( OpenCLmgr->commandQueue,
@@ -582,8 +593,78 @@ Histogram::calcHistGPUwithEvents(){
                                   nullptr);
     check_error(status);
 
+
     clReleaseMemObject(rgb_buffer);
     clReleaseMemObject(hist_buffer);
     clReleaseMemObject(all_hist_buffer);
+
+
+
+    // performance measuring
+
+    cl_ulong    calc_queue_time,
+                calc_start_time,
+                calc_end_time,
+                reduce_queue_time,
+                reduce_start_time,
+                reduce_end_time;
+
+    size_t      return_bytes;
+
+    status = clGetEventProfilingInfo(calcStatisticEvent,
+                                     CL_PROFILING_COMMAND_QUEUED,
+                                     sizeof(cl_ulong),
+                                     &calc_queue_time,
+                                     &return_bytes);
+
+    status = clGetEventProfilingInfo(calcStatisticEvent,
+                                     CL_PROFILING_COMMAND_START,
+                                     sizeof(cl_ulong),
+                                     &calc_start_time,
+                                     &return_bytes);
+
+    status = clGetEventProfilingInfo(calcStatisticEvent,
+                                     CL_PROFILING_COMMAND_END,
+                                     sizeof(cl_ulong),
+                                     &calc_end_time,
+                                     &return_bytes);
+
+
+    status = clGetEventProfilingInfo(reduceStatisticEvent,
+                                     CL_PROFILING_COMMAND_QUEUED,
+                                     sizeof(cl_ulong),
+                                     &reduce_queue_time,
+                                     &return_bytes);
+
+    status = clGetEventProfilingInfo(reduceStatisticEvent,
+                                     CL_PROFILING_COMMAND_START,
+                                     sizeof(cl_ulong),
+                                     &reduce_start_time,
+                                     &return_bytes);
+
+    status = clGetEventProfilingInfo(reduceStatisticEvent,
+                                     CL_PROFILING_COMMAND_END,
+                                     sizeof(cl_ulong),
+                                     &reduce_end_time,
+                                     &return_bytes);
+
+    printf("\nProfiling 'calcStatistic':\n");
+    printf("  Queue:      %u Ns\n", calc_queue_time);
+    printf("  Start:      %u Ns\n", calc_start_time);
+    printf("  End  :      %u Ns\n", calc_end_time);
+    printf("  Queue Time: %10.3f ms\n", double(calc_start_time-calc_queue_time)/1000000.f);
+    printf("  Exec Time : %10.3f ms\n", double(calc_end_time-calc_start_time)/1000000.f);
+
+    printf("\n  IDLE Time : %10.3f ms\n", double(reduce_start_time-calc_end_time)/1000000.f);
+
+    printf("\nProfiling 'reduceStatistic':\n");
+    printf("  Queue:      %u Ns\n", reduce_queue_time);
+    printf("  Start:      %u Ns\n", reduce_start_time);
+    printf("  End  :      %u Ns\n", reduce_end_time);
+    printf("  Queue Time: %10.3f ms\n", double(reduce_start_time-calc_queue_time)/1000000.f);
+    printf("  Exec Time : %10.3f ms\n", double(reduce_end_time-calc_start_time)/1000000.f);
+
+
+
 
 }

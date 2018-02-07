@@ -16,10 +16,12 @@ int main(int argc, char* argv[]) {
     int     pixels_per_workitem     = 256;
     int     groupsize               = 32;
     int     atomic_add              = 0;
+    int     background_mode         = 0;
+    int     detail_debug            = 0;
 
     int options;
 
-    while ((options = getopt (argc, argv, "aof:p:g:")) != -1) {
+    while ((options = getopt (argc, argv, "abdof:p:g:")) != -1) {
         switch (options) {
             case 'o':
                 out_of_order = 1;
@@ -30,9 +32,16 @@ int main(int argc, char* argv[]) {
             case 'a':
                 atomic_add = 1;
                 break;
+            case 'b':
+                background_mode = 1;
+                break;
+
             case 'p':
                 pixels_per_workitem = atoi(optarg);
                 break;
+
+            case 'd':
+                detail_debug = 1;
 
             case '?':
                 if (optopt == 'c')
@@ -49,12 +58,12 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    printf("ARGUMENTS:");
+    printf("ARGUMENTS:\n");
     printf("  filename:            %s\n", filename);
     printf("  out_of_order:        %5i\n", out_of_order);
     printf("  atomic_add:          %5i\n", atomic_add);
     printf("  pixels_per_workitem: %5i\n", pixels_per_workitem);
-    printf("  groupsize:           %5i\n", groupsize);
+    printf("  groupsize:           %5i\n\n", groupsize);
 
 
     clock_t t;
@@ -83,9 +92,12 @@ int main(int argc, char* argv[]) {
     double gpu_dur = (double(t)) / CLOCKS_PER_SEC;
 
     printf("\nGPU Histogram\n");
-//    histo.plotHistogramTable(histo.hist);
+    histo.plotHistogramTable(histo.hist);
+
     histo.plotHistogram(histo.hist);
-//    histo.plotLocalHistograms(histo.local_histograms_gpu);
+
+    if(detail_debug)
+        histo.plotLocalHistograms(histo.local_histograms_gpu);
 
 
     t = clock();
@@ -94,11 +106,16 @@ int main(int argc, char* argv[]) {
     double cpu_dur = (double(t)) / CLOCKS_PER_SEC;
 
     printf("\nCPU Histogram\n");
-//    histo.plotHistogramTable(histo.hist_cpu);
+    histo.plotHistogramTable(histo.hist_cpu);
     histo.plotHistogram(histo.hist_cpu);
-//    histo.plotLocalHistograms(histo.local_histograms_cpu);
 
-//    histo.compareGPUvsCPU();
+    if(detail_debug)
+        histo.plotLocalHistograms(histo.local_histograms_cpu);
+
+
+    if(detail_debug)
+        histo.compareGPUvsCPU();
+
 
 //    histo.plotImageData(10);
 //    histo.plotImageData(-10);

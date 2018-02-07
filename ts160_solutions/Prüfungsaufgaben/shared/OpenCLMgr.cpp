@@ -6,6 +6,8 @@
 #include "OpenCLMgr.h"
 #include "clstatushelper.h"
 
+#define DEBUG_PRINT 0
+
 
 using namespace std;
 
@@ -56,23 +58,27 @@ OpenCLMgr::setVariable(const char* DEF_NAME,
 
             printf("'");
 
+#if(DEBUG_PRINT)
             for (int k = i-8; k < i+30; ++k) {
                 printf("%c", source[k]);
             }
             printf("' ->\n");
-
+#endif
 
             for (int j = 0; j < lendef; ++j) {
                 source[i+length_keyword+j] = new_define[j];
             }
 
+#if(DEBUG_PRINT)
             printf("'");
 
             for (int k = i-8; k < i+30; ++k) {
                 printf("%c", source[k]);
             }
             printf("'\n");
+#endif
             break;
+
         }
     }
 
