@@ -15,16 +15,20 @@ int main(int argc, char* argv[]) {
     int     out_of_order            = 0;
     int     pixels_per_workitem     = 256;
     int     groupsize               = 32;
+    int     atomic_add              = 0;
 
     int options;
 
-    while ((options = getopt (argc, argv, "of:p:g:")) != -1) {
+    while ((options = getopt (argc, argv, "aof:p:g:")) != -1) {
         switch (options) {
             case 'o':
                 out_of_order = 1;
                 break;
             case 'f':
                 filename = optarg;
+                break;
+            case 'a':
+                atomic_add = 1;
                 break;
             case 'p':
                 pixels_per_workitem = atoi(optarg);
@@ -45,15 +49,17 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    printf("filename:            %s\n", filename);
-    printf("out_of_order:        %i\n", out_of_order);
-    printf("pixels_per_workitem: %i\n", pixels_per_workitem);
-    printf("groupsize:           %i\n", groupsize);
+    printf("ARGUMENTS:");
+    printf("  filename:            %s\n", filename);
+    printf("  out_of_order:        %5i\n", out_of_order);
+    printf("  atomic_add:          %5i\n", atomic_add);
+    printf("  pixels_per_workitem: %5i\n", pixels_per_workitem);
+    printf("  groupsize:           %5i\n", groupsize);
 
 
     clock_t t;
 
-    Histogram histo(pixels_per_workitem, groupsize, out_of_order);
+    Histogram histo(pixels_per_workitem, groupsize, atomic_add, out_of_order);
 
 
     if(filename!=NULL){

@@ -12,6 +12,7 @@ OpenCLMgr *Histogram::OpenCLmgr = nullptr;
 
 Histogram::Histogram(int pixel_per_workitem,
                      int group_size,
+                     int atomic_add,
                      int out_of_order){
 
     this->pixels_per_workitem = pixel_per_workitem;
@@ -24,9 +25,13 @@ Histogram::Histogram(int pixel_per_workitem,
         OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE );
     }
 
-    OpenCLmgr->setVariable("DEBUG_PRINT", "1");
 
     OpenCLmgr->loadFile("../Histogram3.cl");
+    OpenCLmgr->setVariable("DEBUG_PRINT", 1);
+    OpenCLmgr->setVariable("PIXEL_PER_WORKITEM", pixel_per_workitem);
+    OpenCLmgr->setVariable("GROUP_ATOMIC_ADD", atomic_add);
+
+
     OpenCLmgr->buildProgram();
     const char *kernel_names[] = {"calcStatistic_kernel", "reduceStatistic_kernel"};
     OpenCLmgr->createKernels(kernel_names, 2);

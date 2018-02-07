@@ -10,6 +10,7 @@ public:
 
     Histogram(int pixels_per_workitem,
               int group_size,
+              int atomic_add,
               int out_of_order);
 
     ~Histogram();

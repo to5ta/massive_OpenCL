@@ -30,7 +30,7 @@ public:
     cl_int loadFile(const char* filepath);
 
     cl_int setVariable(const char* DEF_NAME,
-                       const char* value);
+                       const int value);
 
 
 	int isValid() {return valid;}
@@ -40,7 +40,7 @@ public:
 	cl_program 			program;
 
     std::string sourceStr;
-    const char *source;
+    char *source;
 
 	std::map<const char*, cl_kernel> kernels;
 

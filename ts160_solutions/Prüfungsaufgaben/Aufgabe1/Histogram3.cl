@@ -1,14 +1,10 @@
-//#define PIXEL_PER_WORKITEM 	256
-///=== build failed ===
-///ptxas error   : Entry function 'calcStatistic_kernel' uses too much shared data (0xe004 bytes, 0xc000 max)
+#define PIXEL_PER_WORKITEM 256                   // LEAVE ENOUGH WHITESPACE FOR AUTO REPALCEMENT
+#define GROUP_SIZE 32                            // LEAVE ENOUGH WHITESPACE FOR AUTO REPALCEMENT
+#define DEBUG_PRINT 0                            // LEAVE ENOUGH WHITESPACE FOR AUTO REPALCEMENT
+#define PRINT_CONDITION gid==0                   // LEAVE ENOUGH WHITESPACE FOR AUTO REPALCEMENT
+#define GROUP_ATOMIC_ADD 1                       // LEAVE ENOUGH WHITESPACE FOR AUTO REPALCEMENT
 
-#define PIXEL_PER_WORKITEM 256
-#define GROUP_SIZE 			32
 
-#define DEBUG_PRINT          0
-#define PRINT_CONDITION gid==0
-
-#define GROUP_ATOMIC_ADD     1
 
 __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
                                             uint 		     length,
@@ -21,6 +17,7 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
 
     if(gid==0 & DEBUG_PRINT) {
         printf("\n[\t---KERNEL 'calcStatistic_kernel' INFO BEGIN---\t]\n");
+        printf("PIXEL_PER_WORKITEM: %i\n", PIXEL_PER_WORKITEM);
     }
 
 

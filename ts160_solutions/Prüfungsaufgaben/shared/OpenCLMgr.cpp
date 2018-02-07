@@ -40,7 +40,41 @@ OpenCLMgr::~OpenCLMgr() {
 
 cl_int
 OpenCLMgr::setVariable(const char* DEF_NAME,
-                       const char* value){
+                       const int value){
+
+    size_t length_keyword = strlen(DEF_NAME);
+    size_t length_source = strlen(source);
+
+    char new_define[20];
+
+    int lendef = sprintf(new_define, " %-5i", value);
+//    printf("%s: '%s'\n",DEF_NAME, new_define);
+
+    for(int i=0; i<length_source-length_keyword-1; i++){
+        if(0==memcmp(source+i, DEF_NAME, length_keyword)){
+//            printf("\n\nFOUND: %s \n\n, %i", source+i, i);
+
+            printf("'");
+
+            for (int k = i-8; k < i+30; ++k) {
+                printf("%c", source[k]);
+            }
+            printf("' ->\n");
+
+
+            for (int j = 0; j < lendef; ++j) {
+                source[i+length_keyword+j] = new_define[j];
+            }
+
+            printf("'");
+
+            for (int k = i-8; k < i+30; ++k) {
+                printf("%c", source[k]);
+            }
+            printf("'\n");
+            break;
+        }
+    }
 
 
 }
@@ -210,7 +244,7 @@ cl_int OpenCLMgr::loadFile(const char *filepath) {
     status = convertToString(filepath, sourceStr);
     CHECK_SUCCESS("Error: loading OpenCL file")
 
-    source = sourceStr.c_str();
+    source = (char*)(sourceStr.c_str());
 
     return SUCCESS;
 }
@@ -222,7 +256,8 @@ cl_int OpenCLMgr::buildProgram() {
     cl_int status;
     size_t sourceSize[] = {strlen(source)};
 
-    program = clCreateProgramWithSource(context, 1, &source, sourceSize, &status);
+    const char* temp = (const char*)(source);
+    program = clCreateProgramWithSource(context, 1, &temp, sourceSize, &status);
     CHECK_SUCCESS("Error: creating OpenCL program")
 
     // Build program.
