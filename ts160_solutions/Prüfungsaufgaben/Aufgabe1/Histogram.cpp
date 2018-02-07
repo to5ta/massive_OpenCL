@@ -29,9 +29,6 @@ Histogram::Histogram(int pixel_per_workitem,
 Histogram::~Histogram(){
     delete [] hist;
     delete [] rgb_data;
-//    free(local_histograms_gpu);
-//    free(local_histograms_cpu);
-
     delete [] local_histograms_gpu;
     delete [] local_histograms_cpu;
 }
@@ -112,9 +109,6 @@ Histogram::loadFile(char* file_path, int channels){
         printf(ANSI_COLOR_RESET);
         exit(0);
     }
-
-//    local_histograms_gpu = (cl_uint*)(malloc(workgroups*256*sizeof(cl_uint)));
-//    local_histograms_cpu = (cl_uint*)(malloc(workgroups*256*sizeof(cl_uint)));
 
     local_histograms_gpu = new cl_uint[workgroups*256]();
     local_histograms_cpu = new cl_uint[workgroups*256]();
@@ -249,7 +243,7 @@ Histogram::calcHistCPU() {
         float lum = 0.2126*r + 0.7152*g + 0.0722*b;
         hist_cpu[int(lum)]++;
         // fake local hists like on gpu, step 1
-        local_histograms_cpu[int(lum) + ((i/(64*32*3))*256)]++;
+        local_histograms_cpu[int(lum) + ((i/(pixels_per_workitem*group_size*3))*256)]++;
     }
 }
 
@@ -438,9 +432,4 @@ Histogram::calcHistGPU(){
     clReleaseMemObject(hist_buffer);
     clReleaseMemObject(all_hist_buffer);
 
-//    delete [] local_histograms;
-    // free(local_histograms);
-
-//    plotImageData();
-//    plotHistogram();
 }

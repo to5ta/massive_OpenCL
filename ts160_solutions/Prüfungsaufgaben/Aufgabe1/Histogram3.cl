@@ -2,12 +2,13 @@
 ///=== build failed ===
 ///ptxas error   : Entry function 'calcStatistic_kernel' uses too much shared data (0xe004 bytes, 0xc000 max)
 
-#define PIXEL_PER_WORKITEM 	64
+#define PIXEL_PER_WORKITEM 256
 #define GROUP_SIZE 			32
 
-#define DEBUG_PRINT          1
+#define DEBUG_PRINT          0
 #define PRINT_CONDITION gid==0
 
+#define GROUP_ATOMIC_ADD     1
 
 __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
                                             uint 		     length,
@@ -20,18 +21,32 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
 
     if(gid==0 & DEBUG_PRINT) {
         printf("\n[\t---KERNEL 'calcStatistic_kernel' INFO BEGIN---\t]\n");
-
-//        for(int i = length-50; i<length-2; i+=3){
-////        for(int i = 0; i<30; i+=3){
-////            printf("%i: %i %i %i\n", i, rgba_global[i].x,rgba_global[i].y, rgba_global[i].z );
-//            printf("%i: %i %i %i\n", i, rgba_global[i],rgba_global[i+1], rgba_global[i+2] );
-//        }
-
     }
 
 
-    // create histogram for each workitem AKA "counts[32][256]"
-//    __local uint volatile workitems_histogram[GROUP_SIZE][256];
+#if GROUP_ATOMIC_ADD
+    for (int i = 0; i < PIXEL_PER_WORKITEM; i++) {
+        // int _localID    = lid + i*GROUP_SIZE;
+        int _globalID   = lid + i*GROUP_SIZE + wid * PIXEL_PER_WORKITEM*GROUP_SIZE;
+        _globalID *= 3;
+
+        // out of pixels
+        if(_globalID+2>=length){
+            break;
+        }
+
+        float r         = (float) ( rgba_global[_globalID] );
+        float g         = (float) ( rgba_global[_globalID+1] );
+        float b         = (float) ( rgba_global[_globalID+2] );
+        float luminance = (0.2126*r + 0.7152*g + 0.0722*b);
+
+        atomic_inc( &local_histograms[wid*256 + (int)(luminance)] );
+        //        atomic_inc( &workitems_histogram[lid][(int)(luminance)] );
+        //      workitems_histogram[lid][(int)(luminance)]++;
+    }
+
+#else
+    // create histogram for each workitem AKA "counts[GROUP_SIZE=32][256]"
     __local uint volatile workitems_histogram[256][GROUP_SIZE];
 
     for(int i=0; i<256; i++){
@@ -43,7 +58,7 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
         // int _localID    = lid + i*GROUP_SIZE;
         int _globalID   = lid + i*GROUP_SIZE + wid * PIXEL_PER_WORKITEM*GROUP_SIZE;
         _globalID *= 3;
-        
+
         // out of pixels
         if(_globalID+2>=length){
             break;
@@ -57,51 +72,28 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
         atomic_inc( &workitems_histogram[(int)(luminance)][lid] );
 //        atomic_inc( &workitems_histogram[lid][(int)(luminance)] );
 //      workitems_histogram[lid][(int)(luminance)]++;
-        barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-
     }
 
-
+    barrier(CLK_LOCAL_MEM_FENCE );
 
     // each of the 32 workers within this group shall summize 8 times the histogram bins
     // summize workgroup-internal histograms & copy to buffer
-//    int step_size = 256 / GROUP_SIZE;  // 256%GROUP_SIZE MUST BE ZERO!
-//
-//    for (int k = 0; k < step_size; k++) {
-//        int sum=0;
-//        int binID = k*GROUP_SIZE + lid;
-//
-//        // collect each result from other work items
-//        for (int i = 0; i < GROUP_SIZE; ++i) {
-//            //                         nextHistogram + current step_offset + local offset
-////            sum += workitems_histogram[i][binID];
-//            sum += workitems_histogram[binID][i];
-//        }
-//
-//barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-//
-//        local_histograms[wid*256 + lid+k*32] = sum;
-//
-//    }
+    int step_size = 256 / GROUP_SIZE;  // 256%GROUP_SIZE MUST BE ZERO!
 
+    for (int k = 0; k < step_size; k++) {
+        int sum=0;
+        int binID = k*GROUP_SIZE + lid;
 
-/// Alternative summing
-    if(lid==0){
-        for (int b = 0; b < 256; b++) {
-
-            int sum=0;
-
-            // collect each result from other work items
-            for (int i = 0; i < GROUP_SIZE; ++i) {
-                sum += workitems_histogram[b][i];
-            }
-
-            local_histograms[wid*256 + b] = sum;
-            barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+        // collect each result from other work items
+        for (int i = 0; i < GROUP_SIZE; ++i) {
+//            sum += workitems_histogram[i][binID];
+            sum += workitems_histogram[binID][i];
         }
+
+        local_histograms[wid*256 + lid+k*32] = sum;
     }
 
-
+#endif
 
 
 
