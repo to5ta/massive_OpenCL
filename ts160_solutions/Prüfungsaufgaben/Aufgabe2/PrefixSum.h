@@ -16,6 +16,7 @@ public:
     void loadData(int newdatalength, cl_uint *newdata);
 
     void prefixSumGPU();
+    void prefixSumCPU_Validate();
 
     void printInfo();
 

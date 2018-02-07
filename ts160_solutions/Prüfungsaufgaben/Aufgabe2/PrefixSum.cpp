@@ -4,6 +4,7 @@
 #include "../shared/clstatushelper.h"
 #include "../shared/ansi_colors.h"
 #include <assert.h>
+#include "time.h"
 
 #define SHORTEN_PLOT 1
 #define SHOW_PLACEHOLDER 0
@@ -171,6 +172,7 @@ void PrefixSum::prefixBlockwise(cl_mem input0, cl_mem prefix0, int length0, int 
 }
 
 
+
 void PrefixSum::prefixSumGPU() {
 
     cl_int status;
@@ -200,11 +202,29 @@ void PrefixSum::prefixSumGPU() {
         printf("Card supports up to:    %12u Bytes at once!\n", OpenCLmgr->maxMem);
     }
 
-    inputs[0] = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_ONLY, datalength * sizeof(cl_uint), NULL, NULL);
-    status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue, inputs[0], CL_TRUE, 0, datalength * sizeof(cl_uint),
-                                  inputData, 0, NULL, NULL);
+    inputs[0] = clCreateBuffer(OpenCLmgr->context,
+                               CL_MEM_READ_ONLY,
+                               datalength * sizeof(cl_uint),
+                               NULL,
+                               NULL);
+
+    status = clEnqueueWriteBuffer(OpenCLmgr->commandQueue,
+                                  inputs[0],
+                                  CL_TRUE,
+                                  0,
+                                  datalength * sizeof(cl_uint),
+                                  inputData,
+                                  0,
+                                  NULL,
+                                  NULL);
+
     check_error(status);
-    prefix[0] = clCreateBuffer(OpenCLmgr->context, CL_MEM_READ_WRITE, datalength * sizeof(cl_uint), NULL, NULL);
+
+    prefix[0] = clCreateBuffer(OpenCLmgr->context,
+                               CL_MEM_READ_WRITE,
+                               datalength * sizeof(cl_uint),
+                               NULL,
+                               NULL);
 
     // buffer Length Size
     int b_len = datalength;
@@ -281,3 +301,39 @@ void PrefixSum::prefixSumGPU() {
 
 }
 
+
+
+void
+PrefixSum::prefixSumCPU_Validate() {
+    cl_uint* cpuPrefixSums = new cl_uint[reallength]();
+
+    cl_uint prefix = 0;
+
+    for (int i = 1; i < reallength; ++i) {
+        cpuPrefixSums[i] = cpuPrefixSums[i-1]+inputData[i-1];
+    }
+
+    int err = 0;
+    for (int i = 0; i < reallength; ++i) {
+        if(this->prefixData[i]!=cpuPrefixSums[i]){
+            printf(ANSI_COLOR_RED);
+            printf(ANSI_BOLD);
+            printf("CPU != GPU\n");
+            printf("i: %i, GPU: %i, CPU: %i\n",i, prefixData[i], cpuPrefixSums[i]);
+            printf(ANSI_COLOR_RESET);
+            err++;
+            break;
+        }
+    }
+
+    if(!err){
+        printf(ANSI_COLOR_GREEN);
+        printf(ANSI_BOLD);
+        printf("CPU == GPU\n");
+        printf(ANSI_COLOR_RESET);
+    }
+
+    plotData(cpuPrefixSums, reallength);
+
+    delete [] cpuPrefixSums;
+}

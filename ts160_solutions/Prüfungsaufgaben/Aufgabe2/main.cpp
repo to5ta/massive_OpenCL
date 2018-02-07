@@ -31,7 +31,21 @@ int main() {
     }
 
     prefixSum.loadData(dl, numbers_to_sum);
+
+
+    clock_t t;
+    t = clock();
     prefixSum.prefixSumGPU();
+    t = clock()-t;
+    double gpu_dur = (double(t)) / CLOCKS_PER_SEC;
+
+    t = clock();
+    prefixSum.prefixSumCPU_Validate();
+    t = clock()-t;
+    double cpu_dur = (double(t)) / CLOCKS_PER_SEC;
+
+    printf("GPU Duration: %5.3f ms\n", gpu_dur*1000.f);
+    printf("CPU Duration: %5.3f ms\n", cpu_dur*1000.f);
 
     cout << "Aufgabe 2 [" << ANSI_COLOR_BRIGHTGREEN << "OK" << ANSI_COLOR_RESET << "]" << endl;
     return 0;
