@@ -8,8 +8,9 @@ OpenCLMgr* BitonicSort::OpenCLmgr = NULL;
 
 BitonicSort::BitonicSort(){
 
-    OpenCLmgr = new OpenCLMgr();
-    OpenCLmgr->buildProgram("../bitonic.cl");
+    OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE );
+    OpenCLmgr->loadFile("../bitonic.cl");
+    OpenCLmgr->buildProgram();
     const char * kernel_names[] = {"bitonic_kernel"};
     OpenCLmgr->createKernels(kernel_names, 1);
 
