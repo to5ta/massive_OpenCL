@@ -132,14 +132,28 @@ void BitonicSort::sortGPU(){
                                            NULL);
     check_error(status);
 
+
+
     cl_mem OutBuffer = clCreateBuffer(OpenCLmgr->context,
                                       CL_MEM_READ_WRITE,
                                       this->datalength*sizeof(cl_uint),
                                       NULL,
                                       NULL);
+    check_error(status);
+
+    status          = clEnqueueWriteBuffer(OpenCLmgr->commandQueue,
+                                           OutBuffer,
+                                           CL_TRUE,
+                                           0,
+                                           this->datalength*sizeof(cl_uint),
+                                           this->gpu_data,
+                                           0,
+                                           NULL,
+                                           NULL);
+    check_error(status);
 
     // Run the kernel.
-    size_t gws_0 = (((datalength)-1)/16+1)*16;
+    size_t gws_0 = ((((datalength)-1)/16+1)*16) / 2;
 //    size_t global_work_size[1] = {gws_0};
     size_t global_work_size[1] = {gws_0};
     size_t local_work_size[1] = {gws_0};

@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    uint dl = 32;
+    uint dl = 100;
 
     cl_uint *numbers_to_sort = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
     assert(numbers_to_sort != nullptr);

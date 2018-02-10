@@ -1,5 +1,5 @@
 
-#define DEBUG_INFO 1
+#define DEBUG_INFO 0
 
 int powi(int x, int e){
     return (int)(pow((float)(x),e));
@@ -14,8 +14,8 @@ __kernel void bitonic_kernel(           int     length,
 	int lid     = get_local_id(0);
 	int groupid = get_group_id(0);
 
-    if(gid>=length/2)
-        return;
+//    if(gid>=length/2)
+//        return;
 
     int gid_observe = 6;
 
@@ -23,8 +23,8 @@ __kernel void bitonic_kernel(           int     length,
         printf("GID: %i\n", gid);
     }
 
-    out[gid*2] = in[gid*2];
-    out[gid*2+1] = in[gid*2+1];
+//    out[gid*2] = in[gid*2];
+//    out[gid*2+1] = in[gid*2+1];
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
