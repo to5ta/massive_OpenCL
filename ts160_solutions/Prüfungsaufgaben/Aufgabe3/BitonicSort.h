@@ -12,6 +12,7 @@ public:
 
     void loadData(int datalength, cl_uint *newdata);
     void sortGPU();
+    void sortGPU2();
     void sortCPU();
 
     void printData( uint* data, uint length, uint margin );
@@ -20,8 +21,9 @@ public:
 
     cl_uint *gpu_data   = NULL;
     cl_uint *cpu_data  = NULL;
-    int datalength  = 0;
+    int powerlength  = 0;
     int reallength  = 0;
+
 
 private:
 
