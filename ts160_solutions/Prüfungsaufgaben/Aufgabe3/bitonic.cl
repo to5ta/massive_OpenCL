@@ -1,6 +1,6 @@
 
-#define DEBUG_INFO 1
-
+#define DEBUG_INFO 0
+#define GID_OBSERVE 0
 
 
 void
@@ -26,9 +26,8 @@ __kernel void bitonic_kernel(           int     length,
 //    if(gid>=length/2)
 //        return;
 
-    int gid_observe = 6;
 
-    if(DEBUG_INFO && gid==gid_observe){
+    if(DEBUG_INFO && gid==GID_OBSERVE){
         printf("GID: %i\n", gid);
     }
 
@@ -46,7 +45,7 @@ __kernel void bitonic_kernel(           int     length,
 
     int laps = length/(gws);
 
-//    if(gid==gid_observe && DEBUG_INFO && 0){
+//    if(gid==GID_OBSERVE && DEBUG_INFO && 0){
 //        printf("Total Steps: %i\n", total_steps);
 //        printf("Initial Values: \n");
 //        printf("-");
@@ -72,51 +71,49 @@ __kernel void bitonic_kernel(           int     length,
 
         for(int stage=step; stage>=0; stage--) {
 
-            for (int m = 0; m < laps; ++m) {
+            barrier(CLK_GLOBAL_MEM_FENCE);
 
-                int _gid = gid + m*gws;
+            /// id0 = gid + offset_per_grp *       grp_nr
+            int id0 = gid + powi(2, stage) * (gid / (powi(2, stage)));
 
-                // id0 = gid + offset*gruppe
-                int id0 = _gid + powi(2, stage) * (_gid / (powi(2, stage)));
+            /// id1 = id0 +    offset
+            int id1 = id0 + powi(2, stage);
 
-                // id1 = id0 + offset
-                int id1 = id0 + powi(2, stage);
+            /// direction?
+            int dir = 0;
+            if ((gid / powi(2, step)) % 2) {
+                dir = 1;
+                int _id0 = id0;
+                id0 = id1;
+                id1 = _id0;
+            }
 
-                // direction?
-                int dir = 0;
-                if ((gid / powi(2, step)) % 2) {
-                    dir = 1;
-                    int _id0 = id0;
-                    id0 = id1;
-                    id1 = _id0;
+            barrier(CLK_GLOBAL_MEM_FENCE);
+
+//            // swap
+            if (out[id0] > out[id1]) {
+                int _out0 = out[id0];
+                out[id0] = out[id1];
+                out[id1] = _out0;
+            } else {
+//                out[id0] = in[id0];
+//                out[id0] = in[id1];
+            }
+
+            barrier(CLK_GLOBAL_MEM_FENCE);
+
+            // debug only
+                if (DEBUG_INFO && gid == GID_OBSERVE) {
+                    printf("Step: %i Stage: %i:   GID: %2i   ID_0: %2i -> %2i   Dir: %i   "\
+                           " id0: %3i id1: %3i\n", step, stage, gid, id0, id1, dir, out[id0], out[id1]);
+
+                    printf("GID: %i\n", gid);
+                    printf("DIV: %i\n", powi(2,step));
+                    printf("DIR: %i\n", gid/powi(2,step)%2);
+
                 }
-
-                barrier(CLK_GLOBAL_MEM_FENCE);
-
-    //            // swap
-                if (out[id0] > out[id1]) {
-                    int _out0 = out[id0];
-                    out[id0] = out[id1];
-                    out[id1] = _out0;
-                } else {
-    //                out[id0] = in[id0];
-    //                out[id0] = in[id1];
-                }
-
-                barrier(CLK_GLOBAL_MEM_FENCE);
-
-                // debug only
-//                if (DEBUG_INFO && gid == gid_observe && 0) {
-//                    printf("Step: %i Stage: %i:   GID: %2i   ID_0: %2i -> %2i   Dir: %i   "\
-//                           " id0: %3i id1: %3i\n", step, stage, gid, id0, id1, dir, out[id0], out[id1]);
 //
-//    //                printf("GID: %i\n", gid);
-//    //                printf("DIV: %i\n", powi(2,step));
-//    //                printf("DIR: %i\n", gid/powi(2,step)%2);
-//
-//                }
-//
-//                if (gid == gid_observe && DEBUG_INFO) {
+//                if (gid == GID_OBSERVE && DEBUG_INFO) {
 //
 //                    printf("-");
 //                    for (int i = 0; i < length; i++) {
@@ -137,13 +134,12 @@ __kernel void bitonic_kernel(           int     length,
 //                    }
 //                    printf("]\n\n");
 //                }
-                
-                barrier(CLK_GLOBAL_MEM_FENCE);
-            }
+
             barrier(CLK_GLOBAL_MEM_FENCE);
         }
 
-//        if(gid==gid_observe && DEBUG_INFO){
+
+//        if(gid==GID_OBSERVE && DEBUG_INFO){
 //            printf("\n");
 //        }
 
@@ -152,6 +148,11 @@ __kernel void bitonic_kernel(           int     length,
 
 
     barrier(CLK_GLOBAL_MEM_FENCE);
+
+//    if(gid==GID_OBSERVE){
+//        printData(out, length*2, length);
+//    }
+
     
 }
 

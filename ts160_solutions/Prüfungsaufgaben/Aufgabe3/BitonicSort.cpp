@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cmath>
 #include "../shared/clstatushelper.h"
+#include "../shared/ansi_colors.h"
 #include <stdlib.h>
 
 OpenCLMgr* BitonicSort::OpenCLmgr = NULL;
@@ -137,12 +138,18 @@ void BitonicSort::sortGPU(){
     size_t gws_0 = ((((datalength)-1)/16+1)*16) / 2;
 //    size_t global_work_size[1] = {gws_0};
 
-    if(gws_0>512){
-        // 1024+ does not work even if card says so
-        gws_0=512;
-    }
+    // gws is a power of 2
+
+
+
     size_t global_work_size[1] = {gws_0};
-    size_t local_work_size[1] = {gws_0};
+    size_t local_work_size[1]  = {gws_0};
+
+    if(gws_0<=512){
+        local_work_size[0]  = gws_0;
+    } else {
+        local_work_size[0]  = 512;
+    }
 
 
 
@@ -164,6 +171,7 @@ void BitonicSort::sortGPU(){
 
     printf("GPU Buffer: 0x%x\n", Buffer);
 
+
     // actually start kernel ("enqueue")
     status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue,
                                     OpenCLmgr->kernels["bitonic_kernel"],
@@ -176,7 +184,8 @@ void BitonicSort::sortGPU(){
                                     NULL);
     check_error(status);
 
-    // Read the output back to host memory.
+
+    /// Read the output back to host memory.
     status = clEnqueueReadBuffer(OpenCLmgr->commandQueue,
                                  Buffer,
                                  CL_TRUE,
@@ -188,8 +197,9 @@ void BitonicSort::sortGPU(){
                                  NULL);
     check_error(status);
 
+
     /// cut leading Zeros again!
-     cl_uint * raw_data = new cl_uint[reallength];
+     cl_uint * raw_data = new cl_uint[reallength]();
      memcpy(raw_data, this->gpu_data+(datalength-reallength), sizeof(cl_uint)*reallength);
      delete [] this->gpu_data;
      this->gpu_data = NULL;

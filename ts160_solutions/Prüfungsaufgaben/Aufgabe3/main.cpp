@@ -35,30 +35,29 @@ int main(int argc, char* argv[]) {
 
 
 
-    uint dl = 1024;
+    uint dl = 1000;
 
     cl_uint *numbers_to_sort = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
     assert(numbers_to_sort != nullptr);
 
     for (cl_uint i = 0; i < dl; i++) {
-        numbers_to_sort[i] = (int) (rand()%99)+1;
+        numbers_to_sort[i] = (int) (rand()%9999)+1;
     }
 
 
-
     printf("INPUT: 0x%x\n", numbers_to_sort);
-    bitonicSort->printData(numbers_to_sort, dl, 20);
+    bitonicSort->printData(numbers_to_sort, dl, 10);
 
     bitonicSort->loadData(dl, numbers_to_sort);
 
     bitonicSort->sortGPU();
 
     printf("GPU: 0x%x\n", bitonicSort->gpu_data);
-    bitonicSort->printData(bitonicSort->gpu_data, dl, 20);
+    bitonicSort->printData(bitonicSort->gpu_data, dl, 10);
 
     bitonicSort->sortCPU();
     printf("CPU: 0x%x\n", bitonicSort->cpu_data);
-    bitonicSort->printData(bitonicSort->cpu_data, dl, 20);
+    bitonicSort->printData(bitonicSort->cpu_data, dl, 10);
 
 //    for(int i=0; i<dl; i++){
 //        cout << bitonicSort->data[i] << endl;
