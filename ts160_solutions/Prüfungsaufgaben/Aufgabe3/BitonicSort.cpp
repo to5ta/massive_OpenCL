@@ -114,27 +114,8 @@ void BitonicSort::sortGPU(){
 
     cl_int status=0;
 
-    cl_mem InBuffer = clCreateBuffer(this->OpenCLmgr->context,
-                                     CL_MEM_READ_WRITE,
-                                     datalength*sizeof(cl_uint),
-                                     NULL,
-                                     NULL);
-    check_error(status);
 
-    status          = clEnqueueWriteBuffer(OpenCLmgr->commandQueue,
-                                           InBuffer,
-                                           CL_TRUE,
-                                           0,
-                                           this->datalength*sizeof(cl_uint),
-                                           this->gpu_data,
-                                           0,
-                                           NULL,
-                                           NULL);
-    check_error(status);
-
-
-
-    cl_mem OutBuffer = clCreateBuffer(OpenCLmgr->context,
+    cl_mem Buffer = clCreateBuffer(OpenCLmgr->context,
                                       CL_MEM_READ_WRITE,
                                       this->datalength*sizeof(cl_uint),
                                       NULL,
@@ -142,7 +123,7 @@ void BitonicSort::sortGPU(){
     check_error(status);
 
     status          = clEnqueueWriteBuffer(OpenCLmgr->commandQueue,
-                                           OutBuffer,
+                                           Buffer,
                                            CL_TRUE,
                                            0,
                                            this->datalength*sizeof(cl_uint),
@@ -155,8 +136,15 @@ void BitonicSort::sortGPU(){
     // Run the kernel.
     size_t gws_0 = ((((datalength)-1)/16+1)*16) / 2;
 //    size_t global_work_size[1] = {gws_0};
+
+    if(gws_0>512){
+        // 1024+ does not work even if card says so
+        gws_0=512;
+    }
     size_t global_work_size[1] = {gws_0};
     size_t local_work_size[1] = {gws_0};
+
+
 
     // set arguments here....
     status  = clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"],
@@ -167,17 +155,14 @@ void BitonicSort::sortGPU(){
     status |= clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"],
                              1,
                              sizeof(cl_mem),
-                             (void *)&InBuffer);
-
-    status |= clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"],
-                             2,
-                             sizeof(cl_mem),
-                             (void *)&OutBuffer);
+                             (void *)&Buffer);
     check_error(status);
 
 
     printf("Global Work Size: [%i]\n", global_work_size[0]);
     printf("Local Work Size:  [%i]\n", local_work_size[0]);
+
+    printf("GPU Buffer: 0x%x\n", Buffer);
 
     // actually start kernel ("enqueue")
     status = clEnqueueNDRangeKernel(OpenCLmgr->commandQueue,
@@ -193,11 +178,11 @@ void BitonicSort::sortGPU(){
 
     // Read the output back to host memory.
     status = clEnqueueReadBuffer(OpenCLmgr->commandQueue,
-                                 OutBuffer,
+                                 Buffer,
                                  CL_TRUE,
                                  0,
-                                 datalength*sizeof(cl_uint),
-                                 gpu_data,
+                                 this->datalength*sizeof(cl_uint),
+                                 this->gpu_data,
                                  0,
                                  NULL,
                                  NULL);
@@ -211,8 +196,7 @@ void BitonicSort::sortGPU(){
      this->gpu_data = raw_data;
 
     // release buffers
-    status = clReleaseMemObject(InBuffer);
-    status |= clReleaseMemObject(OutBuffer);
+    status = clReleaseMemObject(Buffer);
     check_error(status);
 }
 

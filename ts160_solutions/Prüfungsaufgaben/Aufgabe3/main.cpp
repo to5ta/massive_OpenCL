@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    uint dl = 100;
+    uint dl = 1024;
 
     cl_uint *numbers_to_sort = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
     assert(numbers_to_sort != nullptr);
@@ -46,17 +46,18 @@ int main(int argc, char* argv[]) {
 
 
 
-    printf("INPUT:\n");
+    printf("INPUT: 0x%x\n", numbers_to_sort);
     bitonicSort->printData(numbers_to_sort, dl, 20);
 
     bitonicSort->loadData(dl, numbers_to_sort);
 
     bitonicSort->sortGPU();
-    printf("GPU:\n");
+
+    printf("GPU: 0x%x\n", bitonicSort->gpu_data);
     bitonicSort->printData(bitonicSort->gpu_data, dl, 20);
 
     bitonicSort->sortCPU();
-    printf("CPU:\n");
+    printf("CPU: 0x%x\n", bitonicSort->cpu_data);
     bitonicSort->printData(bitonicSort->cpu_data, dl, 20);
 
 //    for(int i=0; i<dl; i++){
@@ -76,7 +77,7 @@ int main(int argc, char* argv[]) {
         // manual check, again
         for (int i = 0; i < dl; ++i) {
             if( bitonicSort->gpu_data[i]!=bitonicSort->cpu_data[i]){
-                printf("%i: GPU: %i, CPU: %i\n", i, bitonicSort->gpu_data[i], bitonicSort->cpu_data[i]);
+//                printf("%i: GPU: %i, CPU: %i\n", i, bitonicSort->gpu_data[i], bitonicSort->cpu_data[i]);
                 errors++;
             }
         }
@@ -84,7 +85,7 @@ int main(int argc, char* argv[]) {
         if(!errors){
             cout  << "GPU == CPU ["<<  ANSI_COLOR_YELLOW << "OK" << ANSI_COLOR_RESET << "], but memcmp!=0" << endl;
         } else {
-            cout  << "GPU != CPU ["<<  ANSI_COLOR_RED << "FAILED" << ANSI_COLOR_RESET << "]" << endl;
+            cout  << "GPU != CPU, "<< errors << " Abweichungen ["<<  ANSI_COLOR_RED << "FAILED" << ANSI_COLOR_RESET << "]" << endl;
 
         }
 
