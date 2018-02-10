@@ -23,14 +23,16 @@ int main() {
 //    cl_uint numbers_to_sum[dl];
 
     cl_uint *numbers_to_sum = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
-    assert(numbers_to_sum != NULL);
-
+    assert(numbers_to_sum != nullptr);
 
     for (cl_uint i = 0; i < dl; i++) {
         numbers_to_sum[i] = (int) (rand()%9)+1;
     }
 
     prefixSum.loadData(dl, numbers_to_sum);
+
+    free(numbers_to_sum);
+    numbers_to_sum = nullptr;
 
 
     clock_t t;

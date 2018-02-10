@@ -14,11 +14,14 @@ public:
     void sortGPU();
     void sortCPU();
 
+    void printData( uint* data, uint length, uint margin );
+
     static OpenCLMgr * OpenCLmgr;
 
-    cl_uint *data = NULL;
-    int datalength = 0;
-    int reallength = 0;
+    cl_uint *gpu_data   = NULL;
+    cl_uint *cpu_data  = NULL;
+    int datalength  = 0;
+    int reallength  = 0;
 
 private:
 

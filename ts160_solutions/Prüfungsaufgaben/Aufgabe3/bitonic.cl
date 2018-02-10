@@ -1,11 +1,13 @@
 
-#define DEBUG_INFO 0
+#define DEBUG_INFO 1
 
 int powi(int x, int e){
     return (int)(pow((float)(x),e));
 }
 
-__kernel void bitonic_kernel(int length, __global int* in, __global int* out)
+__kernel void bitonic_kernel(           int     length,
+                             __global   int*    in,
+                             __global   int*    out)
 {
 
 	int gid     = get_global_id(0);
@@ -15,7 +17,9 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
     if(gid>=length/2)
         return;
 
-    if(DEBUG_INFO){
+    int gid_observe = 6;
+
+    if(DEBUG_INFO && gid==gid_observe){
         printf("GID: %i\n", gid);
     }
 
@@ -25,15 +29,13 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
     barrier(CLK_LOCAL_MEM_FENCE);
 
 
-    int gid_observe = 6;
-
     //For definition of stages and steps see:
     // https://www.geeksforgeeks.org/bitonic-sort/
 
     float l = (float)(length/2);
     int total_steps = (log(l)*(log(l)+1))/2;
 
-    if(gid==gid_observe && DEBUG_INFO){
+    if(gid==gid_observe && DEBUG_INFO && 0){
         printf("Total Steps: %i\n", total_steps);
         printf("Initial Values: \n");
         printf("-");
@@ -54,6 +56,8 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
     }
 
     for(int step=0; step<=total_steps; step++){
+
+        barrier(CLK_LOCAL_MEM_FENCE);
 
         for(int stage=step; stage>=0; stage--){
 
@@ -86,9 +90,8 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
 
             barrier(CLK_LOCAL_MEM_FENCE);
 
-
             // debug only
-            if(DEBUG_INFO){
+            if(DEBUG_INFO && gid==gid_observe && 0){
                 printf("Step: %i Stage: %i:   GID: %2i   ID_0: %2i -> %2i   Dir: %i   "\
                        " id0: %3i id1: %3i\n",step, stage, gid, id0, id1, dir, out[id0], out[id1]);
 
@@ -128,7 +131,8 @@ __kernel void bitonic_kernel(int length, __global int* in, __global int* out)
 
 
 
-
-
-
+    barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE );
 }
+
+
+

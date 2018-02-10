@@ -24,13 +24,14 @@ public:
 	~OpenCLMgr();
 
     cl_int createContext(cl_command_queue_properties queue_flags);
-	cl_int buildProgram();
-    cl_int createKernels(const char* kernelnames[], cl_uint count);
 
     cl_int loadFile(const char* filepath);
+    cl_int buildProgram();
+
+    cl_int createKernels(const char* kernelnames[], cl_uint count);
 
     cl_int setVariable(const char* DEF_NAME,
-                       const int value);
+                       const int   value);
 
 
 	int isValid() {return valid;}
