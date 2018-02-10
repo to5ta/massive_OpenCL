@@ -6,7 +6,7 @@
 
 
 
-__kernel void calcStatistic_kernel(__global uchar           *rgba_global,
+kernel void calcStatistic_kernel(__global uchar           *rgba_global,
                                             uint 		     length,
                                    __global unsigned int	*local_histograms){
 
@@ -52,6 +52,8 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
         workitems_histogram[i][lid]=0;
     }
 
+    // barrier(CLK_LOCAL_MEM_FENCE );
+
     // calc histogram per workitem, grab every 32th pixel
     for (int i = 0; i < PIXEL_PER_WORKITEM; i++) {
         // int _localID    = lid + i*GROUP_SIZE;
@@ -68,9 +70,10 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
         float b         = (float) ( rgba_global[_globalID+2] );
         float luminance = (0.2126*r + 0.7152*g + 0.0722*b);
 
-        atomic_inc( &workitems_histogram[(int)(luminance)][lid] );
+//        atomic_inc( &workitems_histogram[(int)(luminance)][lid] );
 //        atomic_inc( &workitems_histogram[lid][(int)(luminance)] );
 //      workitems_histogram[lid][(int)(luminance)]++;
+      workitems_histogram[(int)(luminance)][lid]++;
     }
 
     barrier(CLK_LOCAL_MEM_FENCE );
@@ -97,17 +100,16 @@ __kernel void calcStatistic_kernel(__global uchar           *rgba_global,
 
 
 
-    if(gid==0 & DEBUG_PRINT & PRINT_CONDITION)
+    if(gid==0 && DEBUG_PRINT && PRINT_CONDITION)
         printf("[\t---KERNEL 'calcStatistic_kernel' INFO END---\t]\n\n");
 
-    return;
 }
 
 
 
 
 __kernel void reduceStatistic_kernel(__global  int     *local_histograms,
-                                     int     groups,
+                                               int     groups,
                                      __global  int     *histogram ){
 
     int gid = get_global_id(0);

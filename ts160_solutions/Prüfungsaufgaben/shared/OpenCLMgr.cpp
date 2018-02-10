@@ -275,6 +275,7 @@ cl_int OpenCLMgr::buildProgram() {
         getc(stdin);
         return FAILURE;
     }
+    return status;
 }
 
 

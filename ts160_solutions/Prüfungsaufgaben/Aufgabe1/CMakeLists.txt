@@ -3,7 +3,9 @@ project(Aufgabe1)
 
 set(CMAKE_CXX_STANDARD 11)
 
-link_libraries(/usr/lib/x86_64-linux-gnu/libOpenCL.so)
+#link_libraries(/usr/lib/x86_64-linux-gnu/libOpenCL.so)
+
+find_package(OpenCL REQUIRED)
 
 #include_directories(../shared)
 #link_directories(../shared)
@@ -21,3 +23,5 @@ set(SOURCE_FILES
         )
 
 add_executable(Aufgabe1 ${SOURCE_FILES})
+
+target_link_libraries(Aufgabe1 ${OpenCL_LIBRARIES})

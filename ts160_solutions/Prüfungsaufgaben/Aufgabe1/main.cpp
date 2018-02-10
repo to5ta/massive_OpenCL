@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
 
             case 'd':
                 detail_debug = 1;
+                break;
 
             case '?':
                 if (optopt == 'c')
@@ -53,6 +54,7 @@ int main(int argc, char* argv[]) {
                             "Unknown option character `\\x%x'.\n",
                             optopt);
                 return 1;
+
             default:
                 abort();
         }
@@ -96,8 +98,9 @@ int main(int argc, char* argv[]) {
 
     histo.plotHistogram(histo.hist);
 
-    if(detail_debug)
+    if(detail_debug) {
         histo.plotLocalHistograms(histo.local_histograms_gpu);
+    }
 
 
     t = clock();
@@ -113,8 +116,9 @@ int main(int argc, char* argv[]) {
         histo.plotLocalHistograms(histo.local_histograms_cpu);
 
 
-    if(detail_debug)
-        histo.compareGPUvsCPU();
+//    if(detail_debug)
+
+    histo.compareGPUvsCPU();
 
 
 //    histo.plotImageData(10);

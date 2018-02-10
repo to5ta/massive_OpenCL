@@ -48,6 +48,7 @@ Histogram::~Histogram(){
     delete [] rgb_data;
     delete [] local_histograms_gpu;
     delete [] local_histograms_cpu;
+    delete OpenCLmgr;
 }
 
 
@@ -284,8 +285,8 @@ Histogram::plotLocalHistograms(cl_uint * local_histo){
 void
 Histogram::compareGPUvsCPU(){
     for (int i = 0; i < workgroups; ++i) {
-        int compare_res = memcmp(local_histograms_cpu+(i*256*sizeof(cl_uint)),
-                                 local_histograms_gpu+(i*256*sizeof(cl_uint)),
+        int compare_res = memcmp(local_histograms_cpu+(i*256),
+                                 local_histograms_gpu+(i*256),
                                  256*sizeof(cl_uint));
 //        int compare_res = memcmp(local_histograms_cpu, local_histograms_gpu, 256*sizeof(cl_uint));
         if(compare_res==0){
@@ -296,6 +297,10 @@ Histogram::compareGPUvsCPU(){
         } else {
             int  _diff = 0;
             for (int j = 0; j < 256; ++j) {
+
+                cl_uint localcpu= local_histograms_cpu[i*256+j];
+                cl_uint localgpu= local_histograms_gpu[i*256+j];
+
                 if(local_histograms_cpu[i*256+j] != local_histograms_gpu[i*256+j]){
                     printf(ANSI_COLOR_RED);
                     printf("Local Histogram %3i differs from CPU at %i:    ", i, j);
@@ -450,6 +455,8 @@ Histogram::calcHistGPU(){
                                   nullptr);
     check_error(status);
 
+    clFinish(OpenCLmgr->commandQueue);
+
     clReleaseMemObject(rgb_buffer);
     clReleaseMemObject(hist_buffer);
     clReleaseMemObject(all_hist_buffer);
@@ -588,8 +595,8 @@ Histogram::calcHistGPUwithEvents(){
                                   0,
                                   256*sizeof(int),
                                   this->hist,
-                                  0,
-                                  nullptr,
+                                  1,
+                                  &reduceStatisticEvent,
                                   nullptr);
     check_error(status);
 
@@ -616,6 +623,7 @@ Histogram::calcHistGPUwithEvents(){
                                      sizeof(cl_ulong),
                                      &calc_queue_time,
                                      &return_bytes);
+    check_error(status);
 
     status = clGetEventProfilingInfo(calcStatisticEvent,
                                      CL_PROFILING_COMMAND_START,

@@ -17,7 +17,7 @@ int main() {
 //    int dl = 12;
 
 //    int dl = (int)(pow(256,2))+12345;
-    int dl = (int) (pow(256, 3))*15 -30;
+    int dl = (int) (pow(256, 3))*7 -30;
 //    int dl = 256 *3-50;
 
 //    cl_uint numbers_to_sum[dl];
