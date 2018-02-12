@@ -39,8 +39,8 @@ int main(int argc, char* argv[]) {
 
 
 
-
     uint dl = 512;
+
 
     cl_uint *numbers_to_sort = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
     assert(numbers_to_sort != nullptr);
@@ -56,6 +56,7 @@ int main(int argc, char* argv[]) {
     bitonicSort->loadData(dl, numbers_to_sort);
 
     bitonicSort->sortGPU();
+//    bitonicSort->sortGPU2();
 
     //host-side loops
     // bitonicSort->sortGPU2();
