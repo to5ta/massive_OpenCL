@@ -6,6 +6,11 @@
 #include <assert.h>
 #include <cmath>
 
+
+// host-side loops
+#define HOST_SIDE_LOOPS 0
+
+
 using namespace std;
 
 
@@ -35,7 +40,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    uint dl = 1000;
+    uint dl = 512;
 
     cl_uint *numbers_to_sort = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
     assert(numbers_to_sort != nullptr);
@@ -51,6 +56,9 @@ int main(int argc, char* argv[]) {
     bitonicSort->loadData(dl, numbers_to_sort);
 
     bitonicSort->sortGPU();
+
+    //host-side loops
+    // bitonicSort->sortGPU2();
 
     printf("GPU: 0x%x\n", bitonicSort->gpu_data);
     bitonicSort->printData(bitonicSort->gpu_data, dl, 10);
@@ -69,7 +77,7 @@ int main(int argc, char* argv[]) {
 
     if(memcmp(bitonicSort->gpu_data, bitonicSort->cpu_data, dl)==0) {
         cout  << "GPU == CPU ["<<  ANSI_COLOR_BRIGHTGREEN << "OK" << ANSI_COLOR_RESET << "]" << endl;
-    } else{
+    } else {
 
         int errors = 0;
 
@@ -87,7 +95,6 @@ int main(int argc, char* argv[]) {
             cout  << "GPU != CPU, "<< errors << " Abweichungen ["<<  ANSI_COLOR_RED << "FAILED" << ANSI_COLOR_RESET << "]" << endl;
 
         }
-
     }
 
     return 0;

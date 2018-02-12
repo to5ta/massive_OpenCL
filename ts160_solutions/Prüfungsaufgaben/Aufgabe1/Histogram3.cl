@@ -5,15 +5,13 @@
 #define GROUP_ATOMIC_ADD 1                       // LEAVE ENOUGH WHITESPACE FOR AUTO REPALCEMENT
 
 
-
-kernel void calcStatistic_kernel(__global uchar           *rgba_global,
+kernel void calcStatistic_kernel(__global   uchar           *rgba_global,
                                             uint 		     length,
                                    __global unsigned int	*local_histograms){
 
     int gid = get_global_id(0);
     int lid = get_local_id(0);
     int wid = get_group_id(0);
-
 
     if(gid==0 & DEBUG_PRINT) {
         printf("\n[\t---KERNEL 'calcStatistic_kernel' INFO BEGIN---\t]\n");
@@ -40,8 +38,6 @@ kernel void calcStatistic_kernel(__global uchar           *rgba_global,
         float luminance = (0.2126*r + 0.7152*g + 0.0722*b);
 
         atomic_inc( &local_histograms[wid*256 + (int)(luminance)] );
-        //        atomic_inc( &workitems_histogram[lid][(int)(luminance)] );
-        //      workitems_histogram[lid][(int)(luminance)]++;
     }
 
 #else
@@ -70,9 +66,6 @@ kernel void calcStatistic_kernel(__global uchar           *rgba_global,
         float b         = (float) ( rgba_global[_globalID+2] );
         float luminance = (0.2126*r + 0.7152*g + 0.0722*b);
 
-//        atomic_inc( &workitems_histogram[(int)(luminance)][lid] );
-//        atomic_inc( &workitems_histogram[lid][(int)(luminance)] );
-//      workitems_histogram[lid][(int)(luminance)]++;
       workitems_histogram[(int)(luminance)][lid]++;
     }
 
@@ -88,7 +81,6 @@ kernel void calcStatistic_kernel(__global uchar           *rgba_global,
 
         // collect each result from other work items
         for (int i = 0; i < GROUP_SIZE; ++i) {
-//            sum += workitems_histogram[i][binID];
             sum += workitems_histogram[binID][i];
         }
 
@@ -96,9 +88,6 @@ kernel void calcStatistic_kernel(__global uchar           *rgba_global,
     }
 
 #endif
-
-
-
 
     if(gid==0 && DEBUG_PRINT && PRINT_CONDITION)
         printf("[\t---KERNEL 'calcStatistic_kernel' INFO END---\t]\n\n");
@@ -130,10 +119,6 @@ __kernel void reduceStatistic_kernel(__global  int     *local_histograms,
     for (int i = 0; i < step_size; ++i) {
 
         int bin = i*GROUP_SIZE + lid;
-
-//        if(gid==0 & DEBUG_PRINT & PRINT_CONDITION){
-//            printf("Bin %i\n", bin);
-//        }
 
         uint sum = 0;
         // iterate over all local histograms

@@ -5,13 +5,21 @@
 #include "../shared/ansi_colors.h"
 #include <stdlib.h>
 
+
 OpenCLMgr* BitonicSort::OpenCLmgr = NULL;
 
 
 BitonicSort::BitonicSort(){
 
     OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE );
-    OpenCLmgr->loadFile("../bitonic.cl");
+
+    if(HOST_SIDE_LOOPS){
+        OpenCLmgr->loadFile("../bitonic.cl");
+    } else {
+        // host-side loops
+        OpenCLmgr->loadFile("../bitonic2.cl");
+    }
+
     OpenCLmgr->buildProgram();
     const char * kernel_names[] = {"bitonic_kernel"};
     OpenCLmgr->createKernels(kernel_names, 1);
