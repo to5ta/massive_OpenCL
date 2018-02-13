@@ -14,8 +14,8 @@ BitonicSort::BitonicSort(){
     OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE );
 
 
-    OpenCLmgr->loadFile("../bitonic.cl");
-//    OpenCLmgr->loadFile("../bitonic2.cl");
+    OpenCLmgr->loadFile("../bitonic2.cl");
+//    OpenCLmgr->loadFile("../bitonic.cl");
 
     OpenCLmgr->buildProgram();
     const char * kernel_names[] = {"bitonic_kernel"};
@@ -120,7 +120,6 @@ void BitonicSort::sortGPU(){
 
     cl_int status=0;
 
-
     cl_mem Buffer = clCreateBuffer(OpenCLmgr->context,
                                       CL_MEM_READ_WRITE,
                                       this->powerlength*sizeof(cl_uint),
@@ -139,29 +138,27 @@ void BitonicSort::sortGPU(){
                                            NULL);
     check_error(status);
 
-    // Run the kernel.
-//    size_t gws_0 = ((((powerlength)-1)/16+1)*16) / 2;
-//    size_t global_work_size[1] = {gws_0};
 
     // powerlength is a power of 2
     size_t gws_0 = powerlength/2;
 
+    size_t lws_max = 1024;
+
     size_t global_work_size[1] = {gws_0};
     size_t local_work_size[1]  = {gws_0};
 
-    if(gws_0<=512){
+
+    if(gws_0<=lws_max){
         local_work_size[0]  = gws_0;
     } else {
-        local_work_size[0]  = 512;
+        local_work_size[0]  = lws_max;
     }
-
-
 
     // set arguments here....
     status  = clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"],
                              0,
                              sizeof(cl_int),
-                             (void *)&gws_0);
+                             (void *)&powerlength);
 
     status |= clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"],
                              1,
@@ -170,8 +167,9 @@ void BitonicSort::sortGPU(){
     check_error(status);
 
 
-    printf("Global Work Size: [%i]\n", global_work_size[0]);
-    printf("Local Work Size:  [%i]\n", local_work_size[0]);
+    printf("Global Work Size: [%5i]\n", global_work_size[0]);
+    printf("Local Work Size:  [%5i]\n", local_work_size[0]);
+    printf("Work Groups:      [%5i]\n", global_work_size[0]/local_work_size[0]);
 
     printf("GPU Buffer: 0x%x\n", Buffer);
 
@@ -221,7 +219,6 @@ void BitonicSort::sortGPU2(){
 
     cl_int status=0;
 
-
     cl_mem Buffer = clCreateBuffer(OpenCLmgr->context,
                                    CL_MEM_READ_WRITE,
                                    this->powerlength*sizeof(cl_uint),
@@ -240,13 +237,8 @@ void BitonicSort::sortGPU2(){
                                            NULL);
     check_error(status);
 
-    // Run the kernel.
-    size_t gws_0 = ((((powerlength)-1)/16+1)*16) / 2;
-//    size_t global_work_size[1] = {gws_0};
-
     // gws is a power of 2
-
-
+    size_t gws_0 = powerlength/2;
 
     size_t global_work_size[1] = {gws_0};
     size_t local_work_size[1]  = {gws_0};
@@ -257,32 +249,26 @@ void BitonicSort::sortGPU2(){
         local_work_size[0]  = 1024;
     }
 
-    printf("Global Work Size: [%i]\n", global_work_size[0]);
-    printf("Local Work Size:  [%i]\n", local_work_size[0]);
-    printf("Work Groups:      [%i]\n", global_work_size[0] / local_work_size[0]);
+    printf("Global Work Size: [%5i]\n", global_work_size[0]);
+    printf("Local Work Size:  [%5i]\n", local_work_size[0]);
+    printf("Work Groups:      [%5i]\n", global_work_size[0] / local_work_size[0]);
 
     printf("GPU Buffer: 0x%x\n", Buffer);
-
-
-
 
     cl_uint step = 0;
     cl_uint stage = 0;
 
+    float l = (float)(powerlength);
 
+    cl_uint total_steps = (cl_uint)( log2(l));
 
+    printf("Total Steps: %i, Length: %i\n", total_steps, powerlength);
+//    cl_uint total_steps =
 
-
-
-    float l = (float)(powerlength/2);
-
-    cl_uint total_steps = (log(l)*(log(l)+1))/2;
-
-
-    for(step=0; step<=total_steps; step++){
+    for(step=0; step<total_steps; step++){
         stage = step;
         for(int _stage=step; _stage>=0; _stage--) {
-//            printf("Step: %i, Stage: %i\n", step, stage);
+//            printf("\nStep: %i, Stage: %i\n", step, stage);
 
             // set arguments here....
             status = clSetKernelArg(OpenCLmgr->kernels["bitonic_kernel"],
@@ -324,8 +310,6 @@ void BitonicSort::sortGPU2(){
 
 
 
-    cl_uint *temp_out = new cl_uint[powerlength]();
-
     clFinish(OpenCLmgr->commandQueue);
 
     /// Read the output back to host memory.
@@ -342,11 +326,12 @@ void BitonicSort::sortGPU2(){
 
 
     /// cut leading Zeros again!
-//    cl_uint * raw_data = new cl_uint[reallength]();
-//    delete [] this->gpu_data;
-//    memcpy(gpu_data, temp_out+(powerlength-reallength), sizeof(cl_uint)*reallength);
-//    this->gpu_data = NULL;
-//    this->gpu_data = temp_out;
+    /// cut leading Zeros again!
+    cl_uint * raw_data = new cl_uint[reallength]();
+    memcpy(raw_data, this->gpu_data+(powerlength-reallength), sizeof(cl_uint)*reallength);
+    delete [] this->gpu_data;
+    this->gpu_data = NULL;
+    this->gpu_data = raw_data;
 
     // release buffers
     status = clReleaseMemObject(Buffer);

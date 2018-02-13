@@ -1,7 +1,8 @@
 
-#define DEBUG_INFO 1
+#define DEBUG_INFO 0
 #define GID_OBSERVE 0
 
+#define MAX_ID_DATA 65536
 
 void
 printData(__global uint* data,
@@ -35,28 +36,50 @@ __kernel void bitonic_kernel(   __global   uint*    out,
     //For definition of stages and steps see:
     // https://www.geeksforgeeks.org/bitonic-sort/
 
+    int grp_offset = powi(2, stage);
+    int grp_nr     = (gid / (powi(2, stage)));
 
-    /// id0 = gid + offset_per_grp *       grp_nr
-    int id0 = gid + powi(2, stage) * (gid / (powi(2, stage)));
+    int id0 = gid + grp_offset * grp_nr;
 
-    /// id1 = id0 +    offset
-    int id1 = id0 + powi(2, stage);
+    int id1 = id0 + grp_offset;
+
+//    if(id0 > MAX_ID_DATA || id1 > MAX_ID_DATA){
+//        printf("GID: %3i    id0: %3i, id1: %3i    grp_offset: %3i, grp_nr: %3i\n", gid, id0, id1, grp_offset, grp_nr);
+//    }
+
+    int _id0;
 
     /// direction?
     int dir = 0;
-    if ((gid / powi(2, step)) % 2) {
+    if ((gid/powi(2, step))%2==0) {
         dir = 1;
-        int _id0 = id0;
+        _id0 = id0;
         id0 = id1;
         id1 = _id0;
     }
 
-    /// swap
-    if (out[id0] > out[id1]) {
+    // that was for error hunting
+    if(id0 > gws*2 || id1 > gws*2 ){
+
+//        printf("(gid:%i / powi(2, step) = %i % 2= %i\n",gid, (gid / powi(2, step)), (gid / powi(2, step))%2 );
+
+        // kein tausch
+        if(dir==0){
+            printf("GID: %3i    id0: %3i, id1: %3i    grp_offset: %8i, grp_nr: %3i  ->\n", gid, id0, id1, grp_offset, grp_nr);
+        }
+        // tausch
+        else {
+            printf("GID: %3i    id0: %3i, id1: %3i    grp_offset: %8i, grp_nr: %3i  <-\n", gid, id1, id0, grp_offset, grp_nr);
+        }
+    }
+
+/// swap
+    if (out[id0] < out[id1]) {
         int _out0 = out[id0];
         out[id0] = out[id1];
         out[id1] = _out0;
     }
+
 
     if(gid==0 && DEBUG_INFO){
 //        printf("  <<< KERNEL PRINT BUFFER <<<\n");;
@@ -68,6 +91,7 @@ __kernel void bitonic_kernel(   __global   uint*    out,
 //    }
 
     barrier(CLK_GLOBAL_MEM_FENCE);
+
 }
 
 

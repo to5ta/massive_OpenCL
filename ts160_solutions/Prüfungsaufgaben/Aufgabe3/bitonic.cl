@@ -13,7 +13,7 @@ int powi(int x, int e){
     return (int)(pow((float)(x),e));
 }
 
-__kernel void bitonic_kernel(           int     length,
+__kernel void bitonic_kernel(           int     length, // must be exponent with base 2
                              __global   int*    out)
 {
 
@@ -23,16 +23,9 @@ __kernel void bitonic_kernel(           int     length,
 
     int gws     = get_global_size(0);
 
-//    if(gid>=length/2)
-//        return;
-
-
     if(DEBUG_INFO && gid==GID_OBSERVE){
         printf("GID: %i\n", gid);
     }
-
-//    out[gid*2] = in[gid*2];
-//    out[gid*2+1] = in[gid*2+1];
 
     barrier(CLK_GLOBAL_MEM_FENCE);
 
@@ -40,10 +33,13 @@ __kernel void bitonic_kernel(           int     length,
     //For definition of stages and steps see:
     // https://www.geeksforgeeks.org/bitonic-sort/
 
-    float l = (float)(length/2);
-    int total_steps = (log(l)*(log(l)+1))/2;
+    float l = (float)(length);
+    int total_steps = (uint)( log2(l));
 
-    int laps = length/(gws);
+    if(gid==0 && DEBUG_INFO){
+        printf("Total Steps: %i\n", total_steps);
+        printf("Length:      %i\n", length);
+    }
 
 //    if(gid==GID_OBSERVE && DEBUG_INFO && 0){
 //        printf("Total Steps: %i\n", total_steps);
@@ -65,7 +61,7 @@ __kernel void bitonic_kernel(           int     length,
 //        printf("]\n");
 //    }
 
-    for(int step=0; step<=total_steps; step++){
+    for(int step=0; step<total_steps; step++){
 
         barrier(CLK_GLOBAL_MEM_FENCE);
 
@@ -73,17 +69,20 @@ __kernel void bitonic_kernel(           int     length,
 
             barrier(CLK_GLOBAL_MEM_FENCE);
 
-            /// id0 = gid + offset_per_grp *       grp_nr
-            int id0 = gid + powi(2, stage) * (gid / (powi(2, stage)));
+            int grp_offset = powi(2, stage);
+            int grp_nr     = (gid / (powi(2, stage)));
 
-            /// id1 = id0 +    offset
-            int id1 = id0 + powi(2, stage);
+            int id0 = gid + grp_offset * grp_nr;
+
+            int id1 = id0 + grp_offset;
+
+            int _id0;
 
             /// direction?
             int dir = 0;
             if ((gid / powi(2, step)) % 2) {
                 dir = 1;
-                int _id0 = id0;
+                _id0 = id0;
                 id0 = id1;
                 id1 = _id0;
             }
@@ -95,9 +94,6 @@ __kernel void bitonic_kernel(           int     length,
                 int _out0 = out[id0];
                 out[id0] = out[id1];
                 out[id1] = _out0;
-            } else {
-//                out[id0] = in[id0];
-//                out[id0] = in[id1];
             }
 
             barrier(CLK_GLOBAL_MEM_FENCE);
@@ -107,9 +103,9 @@ __kernel void bitonic_kernel(           int     length,
                     printf("Step: %i Stage: %i:   GID: %2i   ID_0: %2i -> %2i   Dir: %i   "\
                            " id0: %3i id1: %3i\n", step, stage, gid, id0, id1, dir, out[id0], out[id1]);
 
-                    printf("GID: %i\n", gid);
-                    printf("DIV: %i\n", powi(2,step));
-                    printf("DIR: %i\n", gid/powi(2,step)%2);
+//                    printf("GID: %i\n", gid);
+//                    printf("DIV: %i\n", powi(2,step));
+//                    printf("DIR: %i\n", gid/powi(2,step)%2);
 
                 }
 //
