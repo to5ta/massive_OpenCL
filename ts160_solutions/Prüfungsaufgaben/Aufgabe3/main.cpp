@@ -4,11 +4,8 @@
 #include "BitonicSort.h"
 #include <cstring>
 #include <assert.h>
+#include "unistd.h"
 #include <cmath>
-
-
-// host-side loops
-#define HOST_SIDE_LOOPS 0
 
 
 using namespace std;
@@ -17,11 +14,43 @@ using namespace std;
 int main(int argc, char* argv[]) {
 
 
-    BitonicSort * bitonicSort = new BitonicSort();
+    int     host_side_loops = 0;
+    uint    dl             = 16000;
 
-//    uint dl = 16000;
-    uint dl = 65536;
-//    uint dl = 131000;
+    clock_t t;
+
+    int options;
+
+    while ((options = getopt (argc, argv, "hl:")) != -1) {
+        switch (options) {
+            case 'h':
+                host_side_loops = 1;
+                printf("\n-h: Calculating with host-side-loops, multiple starts of the kernel!\n\n");
+                break;
+
+            case 'l':
+                dl = atoi(optarg);
+                printf("\n-l <n>: Generating pseudo-random input data of length %i!\n\n", dl);
+                break;
+
+            case '?':
+                if (optopt == 'c')
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                else if (isprint(optopt))
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                else
+                    fprintf(stderr,
+                            "Unknown option character `\\x%x'.\n",
+                            optopt);
+                return 1;
+
+            default:
+                abort();
+        }
+    }
+
+
+    BitonicSort * bitonicSort = new BitonicSort(host_side_loops);
 
     cl_uint *numbers_to_sort = (cl_uint *) (malloc(sizeof(cl_uint) * dl));
     assert(numbers_to_sort != nullptr);
@@ -30,25 +59,35 @@ int main(int argc, char* argv[]) {
         numbers_to_sort[i] = (int) (rand()%9999)+1;
     }
 
-
-
     printf("INPUT: 0x%x\n", numbers_to_sort);
     bitonicSort->printData(numbers_to_sort, dl, 10);
 
     bitonicSort->loadData(dl, numbers_to_sort);
 
-//    bitonicSort->sortGPU();
+    t = clock();
+    if(host_side_loops){
+        //host-side loops
+        bitonicSort->sortGPU2();
 
-    //host-side loops
-     bitonicSort->sortGPU2();
+    } else {
+        bitonicSort->sortGPU();
+    }
+    t = clock() - t;
+    double gpu_dur = (double(t)) / CLOCKS_PER_SEC;
+
 
     printf("GPU: 0x%x\n", bitonicSort->gpu_data);
     bitonicSort->printData(bitonicSort->gpu_data, dl, 10);
 
+    t = clock();
     bitonicSort->sortCPU();
     printf("CPU: 0x%x\n", bitonicSort->cpu_data);
     bitonicSort->printData(bitonicSort->cpu_data, dl, 10);
+    t = clock() - t;
+    double cpu_dur = (double(t)) / CLOCKS_PER_SEC;
 
+    printf("GPU Duration: %5.3f ms\n", gpu_dur*1000.f);
+    printf("CPU Duration: %5.3f ms\n", cpu_dur*1000.f);
 
     if(memcmp(bitonicSort->gpu_data, bitonicSort->cpu_data, dl)==0) {
         cout  << "GPU == CPU ["<<  ANSI_COLOR_BRIGHTGREEN << "OK" << ANSI_COLOR_RESET << "]" << endl;

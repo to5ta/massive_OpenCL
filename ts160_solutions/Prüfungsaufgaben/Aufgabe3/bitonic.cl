@@ -134,14 +134,12 @@ __kernel void bitonic_kernel(           int     length, // must be exponent with
             barrier(CLK_GLOBAL_MEM_FENCE);
         }
 
-
 //        if(gid==GID_OBSERVE && DEBUG_INFO){
 //            printf("\n");
 //        }
 
         barrier(CLK_GLOBAL_MEM_FENCE);
     }
-
 
     barrier(CLK_GLOBAL_MEM_FENCE);
 

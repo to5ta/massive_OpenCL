@@ -6,7 +6,7 @@
 class BitonicSort {
 
 public:
-    BitonicSort();
+    BitonicSort(int host_side_loops);
 
     ~BitonicSort();
 

@@ -9,13 +9,15 @@
 OpenCLMgr* BitonicSort::OpenCLmgr = NULL;
 
 
-BitonicSort::BitonicSort(){
+BitonicSort::BitonicSort(int host_side_loops){
 
     OpenCLmgr = new OpenCLMgr( CL_QUEUE_PROFILING_ENABLE );
 
-
-    OpenCLmgr->loadFile("../bitonic2.cl");
-//    OpenCLmgr->loadFile("../bitonic.cl");
+    if(host_side_loops){
+        OpenCLmgr->loadFile("../bitonic2.cl");
+    } else {
+        OpenCLmgr->loadFile("../bitonic.cl");
+    }
 
     OpenCLmgr->buildProgram();
     const char * kernel_names[] = {"bitonic_kernel"};
@@ -43,9 +45,6 @@ void BitonicSort::loadData(int newpowerlength, cl_uint *newdata){
         delete [] this->cpu_data;
         cpu_data = NULL;
     }
-
-//    if(pow( (int)(log2(newpowerlength))+1
-
 
     this->powerlength = (int)(pow(2, ceil(log2(newpowerlength))));
 
@@ -305,9 +304,7 @@ void BitonicSort::sortGPU2(){
             clFinish(OpenCLmgr->commandQueue);
 
         }
-
     }
-
 
 
     clFinish(OpenCLmgr->commandQueue);
@@ -324,8 +321,6 @@ void BitonicSort::sortGPU2(){
                                  NULL);
     check_error(status);
 
-
-    /// cut leading Zeros again!
     /// cut leading Zeros again!
     cl_uint * raw_data = new cl_uint[reallength]();
     memcpy(raw_data, this->gpu_data+(powerlength-reallength), sizeof(cl_uint)*reallength);

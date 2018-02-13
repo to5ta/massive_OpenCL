@@ -65,11 +65,25 @@ __kernel void bitonic_kernel(   __global   uint*    out,
 
         // kein tausch
         if(dir==0){
-            printf("GID: %3i    id0: %3i, id1: %3i    grp_offset: %8i, grp_nr: %3i  ->\n", gid, id0, id1, grp_offset, grp_nr);
+            printf("GID: %3i    id0: %3i, id1: %3i    grp_offset: %8i, grp_nr: %3i  ->, step: %i, stage: %i\n",
+                    gid,
+                    id0,
+                    id1,
+                    grp_offset,
+                    grp_nr,
+                    step,
+                    stage);
         }
         // tausch
         else {
-            printf("GID: %3i    id0: %3i, id1: %3i    grp_offset: %8i, grp_nr: %3i  <-\n", gid, id1, id0, grp_offset, grp_nr);
+            printf("GID: %3i    id0: %3i, id1: %3i    grp_offset: %8i, grp_nr: %3i  ->, step: %i, stage: %i\n",
+                    gid,
+                    id0,
+                    id1,
+                    grp_offset,
+                    grp_nr,
+                    step,
+                    stage);
         }
     }
 
