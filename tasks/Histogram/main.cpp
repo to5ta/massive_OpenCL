@@ -82,9 +82,8 @@ int main(int argc, char* argv[]) {
         }
     }
     else {
-        printf("No Image given! Use hardcoded path...\n");
-//        histo.loadFile("../colorful_image_large.jpg", 3);
-        histo.loadFile("../parrot_big.jpeg", 3);
+        printf("No Image given! Terminating...\n");
+        exit(0); 
     }
 
 
