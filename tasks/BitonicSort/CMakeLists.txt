@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(Aufgabe3)
+project(BitonicSort)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -18,4 +18,4 @@ set(SOURCE_FILES
         ../shared/clstatushelper.h
         )
 
-add_executable(Aufgabe3 ${SOURCE_FILES})
+add_executable(BitonicSort ${SOURCE_FILES})

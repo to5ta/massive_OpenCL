@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(Aufgabe1)
+project(Histogram)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -22,6 +22,6 @@ set(SOURCE_FILES
         Histogram.h
         )
 
-add_executable(Aufgabe1 ${SOURCE_FILES})
+add_executable(Histogram ${SOURCE_FILES})
 
-target_link_libraries(Aufgabe1 ${OpenCL_LIBRARIES})
+target_link_libraries(Histogram ${OpenCL_LIBRARIES})
